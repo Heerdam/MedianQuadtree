@@ -183,7 +183,7 @@ namespace MQT {
         //----------------
         [[nodiscard]] bool check_fast(const Vec& _pos, const Vec2& _ext) const noexcept;
         //[min, max)
-        [[nodiscard]] std::pair<int32_t, int32_t> check(const Vec2& _min, const Vec2& _max, const T _h) const noexcept;
+        [[nodiscard]] std::pair<int32_t, int32_t> check_overlap(const Vec2& _min, const Vec2& _max, const T _h) const noexcept;
         [[nodiscard]] int32_t check_border(const Vec& _pos, const Vec2& _ext) const noexcept;
         //----------------
         friend std::ostream& MQT::operator<< (std::ostream& s, const MedianQuadTree<T, ALLOCATOR>& t);
@@ -563,10 +563,10 @@ MQT::MedianQuadTree<T, ALLOCATOR>::MedianQuadTree(
 
     recompute();
 
-    std::cout << "Max Level: " << max_level_ << std::endl;
-    std::cout << "Nodes: " << nc << std::endl;
-    std::cout << "Buckets: " << bc << std::endl;
-    std::cout << "N: " << N_ << std::endl;
+    //std::cout << "Max Level: " << max_level_ << std::endl;
+    //std::cout << "Nodes: " << nc << std::endl;
+    //std::cout << "Buckets: " << bc << std::endl;
+    //std::cout << "N: " << N_ << std::endl;
 
 }//MQT::MedianQuadTree::MedianQuadTree
 
@@ -576,7 +576,7 @@ void MQT::MedianQuadTree<T, ALLOCATOR>::recompute() {
 }//MQT::MedianQuadTree::recompute
 
 template<class T, class ALLOCATOR>
-std::pair<int32_t, int32_t> MQT::MedianQuadTree<T, ALLOCATOR>::check(const Vec2& _min, const Vec2& _max, const T _h) const noexcept {
+std::pair<int32_t, int32_t> MQT::MedianQuadTree<T, ALLOCATOR>::check_overlap(const Vec2& _min, const Vec2& _max, const T _h) const noexcept {
     return root_->overlap(_min, _max, _h);
 }//MQT::MedianQuadTree::check
 
