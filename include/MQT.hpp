@@ -62,7 +62,7 @@ namespace MQT {
                     const int32_t i = n1 + n0 * _N;
                     if(i < 0 || i >= int32_t(_map.size())) continue;
                     if(isEqual(_map[i], _h)) m++;
-                    if (_map[i] > _h) h++;
+                    else if (_map[i] > _h) h++;
                     else l++;
                 }
             }
@@ -275,7 +275,7 @@ std::tuple<int32_t, int32_t, int32_t> MQT::Detail::Bucket<T, ALLOCATOR>::overlap
     if (isFlat_ && !isPartial) {
 
         if(isEqual(_h, median_)) return { 0, l_.size() + h_.size(), 0 };
-        if (_h >= median_) return { l_.size() + h_.size(), 0, 0 };
+        else if (_h >= median_) return { l_.size() + h_.size(), 0, 0 };
         else return { 0, 0, l_.size() + h_.size() };
 
     }
@@ -313,8 +313,8 @@ std::tuple<int32_t, int32_t, int32_t> MQT::Detail::Bucket<T, ALLOCATOR>::overlap
             if (!contains(pos[0], pos[1])) continue;
 
             if(isEqual(map_[i], _h)) m++;
-            if (map_[i] >= _h) high++;
-            if (map_[i] < _h) low++;
+            else if (map_[i] > _h) high++;
+            else low++;
         }
 
         return { low, m, high };
@@ -330,8 +330,8 @@ std::tuple<int32_t, int32_t, int32_t> MQT::Detail::Bucket<T, ALLOCATOR>::overlap
             if (!contains(pos[0], pos[1])) continue;
 
             if(isEqual(map_[i], _h)) m++;
-            if (map_[i] >= _h) high++;
-            if (map_[i] < _h) low++;
+            else if (map_[i] > _h) high++;
+            else low++;
         }
 
         return { low, m, high };
