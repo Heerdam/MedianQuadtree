@@ -49,23 +49,24 @@ namespace MQT {
         //----------------------------------
 
         template<class T, class ALLOCATOR = std::allocator<T>>
-        [[nodiscard]] inline std::pair<int32_t, int32_t> naive_tester(
+        [[nodiscard]] inline std::tuple<int32_t, int32_t, int32_t> naive_tester(
         const std::vector<T, ALLOCATOR>& _map,
         const Vec2& _min,
         const Vec2& _max,
         const int32_t _N,
         const T _h
         ) {
-            int32_t h = 0, l = 0;
+            int32_t h = 0, m = 0, l = 0;
             for (int32_t n0 = std::max(0, _min[0]); n0 < std::min(_N, _max[0]); ++n0) {
                 for (int32_t n1 = std::max(0, _min[1]); n1 < std::min(_N, _max[1]); ++n1) {
                     const int32_t i = n1 + n0 * _N;
                     if(i < 0 || i >= int32_t(_map.size())) continue;
-                    if (_map[i] >= _h) h++;
+                    if(isEqual(_map[i], _h)) m++;
+                    if (_map[i] > _h) h++;
                     else l++;
                 }
             }
-            return std::make_pair(l, h);
+            return { l, m, h };
 	    };//naive_tester
 
         //----------------------------------
@@ -100,7 +101,7 @@ namespace MQT {
             void recompute();
             //----------------
             [[nodiscard]] bool overlap_fast(const Vec2& _min, const Vec2& _max, T _h) const noexcept;
-            [[nodiscard]] std::pair<int32_t, int32_t> overlap(const Vec2& _min, const Vec2& _max, T _h) const noexcept;
+            [[nodiscard]] std::tuple<int32_t, int32_t, int32_t> overlap(const Vec2& _min, const Vec2& _max, T _h) const noexcept;
             [[nodiscard]] int32_t overlap_border(const Vec2& _min, const Vec2& _max, T _h) const noexcept;
             friend std::ostream& MQT::operator<< (std::ostream& s, const Bucket<T, ALLOCATOR>& t);
         };//Bucket
@@ -135,7 +136,7 @@ namespace MQT {
             void recompute();
             //----------------
             [[nodiscard]] bool overlap_fast(const Vec2& _min, const Vec2& _max, T _h) const noexcept;
-            [[nodiscard]] std::pair<int32_t, int32_t> overlap(const Vec2& _min, const Vec2& _max, T _h) const noexcept;
+            [[nodiscard]] std::tuple<int32_t, int32_t, int32_t> overlap(const Vec2& _min, const Vec2& _max, T _h) const noexcept;
             [[nodiscard]] int32_t overlap_border(const Vec2& _min, const Vec2& _max, T _h) const noexcept;
             friend std::ostream& MQT::operator<< (std::ostream& s, const Node<T, ALLOCATOR>& t);
         };//Node
@@ -183,7 +184,7 @@ namespace MQT {
         //----------------
         [[nodiscard]] bool check_fast(const Vec& _pos, const Vec2& _ext) const noexcept;
         //[min, max)
-        [[nodiscard]] std::pair<int32_t, int32_t> check_overlap(const Vec2& _min, const Vec2& _max, const T _h) const noexcept;
+        [[nodiscard]] std::tuple<int32_t, int32_t, int32_t> check_overlap(const Vec2& _min, const Vec2& _max, const T _h) const noexcept;
         [[nodiscard]] int32_t check_border(const Vec& _pos, const Vec2& _ext) const noexcept;
         //----------------
         friend std::ostream& MQT::operator<< (std::ostream& s, const MedianQuadTree<T, ALLOCATOR>& t);
@@ -259,7 +260,7 @@ bool MQT::Detail::Bucket<T, ALLOCATOR>::overlap_fast(
 }//MQT::MedianQuadTree::Bucket::overlap_fast
 
 template<class T, class ALLOCATOR>
-std::pair<int32_t, int32_t> MQT::Detail::Bucket<T, ALLOCATOR>::overlap(
+std::tuple<int32_t, int32_t, int32_t> MQT::Detail::Bucket<T, ALLOCATOR>::overlap(
     const Vec2& _min, 
     const Vec2& _max, 
     T _h
@@ -273,8 +274,9 @@ std::pair<int32_t, int32_t> MQT::Detail::Bucket<T, ALLOCATOR>::overlap(
 
     if (isFlat_ && !isPartial) {
 
-        if (_h >= median_) return { l_.size() + h_.size(), 0 };
-        else return { 0, l_.size() + h_.size() };
+        if(isEqual(_h, median_)) return { 0, l_.size() + h_.size(), 0 };
+        if (_h >= median_) return { l_.size() + h_.size(), 0, 0 };
+        else return { 0, 0, l_.size() + h_.size() };
 
     }
 
@@ -283,64 +285,56 @@ std::pair<int32_t, int32_t> MQT::Detail::Bucket<T, ALLOCATOR>::overlap(
     //partial overlap
     if (isPartial) {
 
-        //std::cout << *this << std::endl;
-
-
-        int32_t low = 0;
-        int32_t high = 0;
+        int32_t l = 0, m = 0, h = 0;
         // n1: x, n0: y
         for (int32_t n0 = std::max(bmin_[0], _min[0]); n0 < std::min(bmax_[0], _max[0]); ++n0) {
             for (int32_t n1 = std::max(bmin_[1], _min[1]); n1 < std::min(bmax_[1], _max[1]); ++n1) {
                 const int32_t i = n1 + n0 * N_;
                 if (i >= int32_t(map_.size())) continue;
-                if (map_[i] >= _h) high++;
-                else low++;
+                if(isEqual(map_[i], _h)) m++;
+                if (map_[i] > _h) h++;
+                else l++;
             }
         }
 
-        //std::cout << low << ", " << high << std::endl;
-        return { low, high };
+        return { l, m, h };
 
     }
 
     //--------------------
-    //std::cout << *this << std::endl;
-    //std::cout << "[" << _min[0] << ", " << _min[1] << "][" << _max[0] << ", " << _max[1] << "]" << std::endl;
-    
-    
     if (_h > median_) {
 
         int32_t low = l_.size();
+        int32_t m = 0;
         int32_t high = 0;
 
         for (const Vec2 pos : h_) {
             const int32_t i = pos[1] + pos[0] * N_;
             if (!contains(pos[0], pos[1])) continue;
 
-            if (map_[i] >= _h)
-                high++;
-            if (map_[i] < _h)
-                low++;
+            if(isEqual(map_[i], _h)) m++;
+            if (map_[i] >= _h) high++;
+            if (map_[i] < _h) low++;
         }
 
-        return { low, high };
+        return { low, m, high };
 
     } else {
 
         int32_t low = 0;
+        int32_t m = 0;
         int32_t high = h_.size();
 
         for (const Vec2 pos : l_) {
             const int32_t i = pos[1] + pos[0] * N_;
             if (!contains(pos[0], pos[1])) continue;
 
-            if (map_[i] >= _h)
-                high++;
-            if (map_[i] < _h)
-                low++;
+            if(isEqual(map_[i], _h)) m++;
+            if (map_[i] >= _h) high++;
+            if (map_[i] < _h) low++;
         }
 
-        return { low, high };
+        return { low, m, high };
 
     }
 
@@ -409,15 +403,15 @@ bool MQT::Detail::Node<T, ALLOCATOR>::overlap_fast(
 }//MQT::MedianQuadTree::Node::overlap_fast
 
 template<class T, class ALLOCATOR>
-std::pair<int32_t, int32_t> MQT::Detail::Node<T, ALLOCATOR>::overlap(
+std::tuple<int32_t, int32_t, int32_t> MQT::Detail::Node<T, ALLOCATOR>::overlap(
     const Vec2& _min,
     const Vec2& _max,
     T _h
 ) const noexcept {
 
     const bool isPartial = _min[0] > bmin_[0] || _max[0] < bmax_[0] || _min[1] > bmin_[1] || _max[1] < bmax_[1];
-    const bool isH = _h >= max_;
-    const bool isL = _h < min_;
+    const bool isH = _h > max_;
+    const bool isM = isEqual(max_, _h);
 
     if (isFlat_) {
 
@@ -429,13 +423,15 @@ std::pair<int32_t, int32_t> MQT::Detail::Node<T, ALLOCATOR>::overlap(
             const int32_t max0 = std::min(_max[0], bmax_[0]);
             const int32_t max1 = std::min(_max[1], bmax_[1]);
 
-            if (isH) return { (max0 - min0) * (max1 - min1), 0 };
-            else return { 0, (max0 - min0) * (max1 - min1) };
+            if (isH) return { (max0 - min0) * (max1 - min1), 0, 0 };
+            if (isM) return { 0, (max0 - min0) * (max1 - min1), 0 };
+            else return { 0, 0, (max0 - min0) * (max1 - min1) };
 
         } else {
             const int32_t r = N_ / int32_t(std::pow(2, level_ - 1));
-            if(isH) return { r*r, 0};
-            else return { 0, r*r};
+            if(isH) return { r*r, 0, 0};
+            if (isM) return { 0, r*r, 0};
+            else return { 0, 0, r*r};
         }
 
     }
@@ -443,6 +439,7 @@ std::pair<int32_t, int32_t> MQT::Detail::Node<T, ALLOCATOR>::overlap(
     //----------------------------
 
     int32_t low = 0;
+    int32_t m = 0;
     int32_t high = 0;
     switch (c_[0].index()) {
         case 0:
@@ -450,7 +447,8 @@ std::pair<int32_t, int32_t> MQT::Detail::Node<T, ALLOCATOR>::overlap(
             for (int32_t i = 0; i < 4; ++i) {
                 const auto r = std::get<0>(c_[i])->overlap(_min, _max, _h);
                 low += std::get<0>(r);
-                high += std::get<1>(r);
+                m += std::get<1>(r);
+                high += std::get<2>(r);
             }
         }
         break;
@@ -459,12 +457,13 @@ std::pair<int32_t, int32_t> MQT::Detail::Node<T, ALLOCATOR>::overlap(
             for (int32_t i = 0; i < 4; ++i) {
                 const auto r = std::get<1>(c_[i])->overlap(_min, _max, _h);
                 low += std::get<0>(r);
-                high += std::get<1>(r);
+                m += std::get<1>(r);
+                high += std::get<2>(r);
             }
         }
         break;
     }
-    return { low, high };
+    return { low, m, high };
 
 }//MQT::MedianQuadTree::Node::overlap
 
@@ -576,7 +575,7 @@ void MQT::MedianQuadTree<T, ALLOCATOR>::recompute() {
 }//MQT::MedianQuadTree::recompute
 
 template<class T, class ALLOCATOR>
-std::pair<int32_t, int32_t> MQT::MedianQuadTree<T, ALLOCATOR>::check_overlap(const Vec2& _min, const Vec2& _max, const T _h) const noexcept {
+std::tuple<int32_t, int32_t, int32_t> MQT::MedianQuadTree<T, ALLOCATOR>::check_overlap(const Vec2& _min, const Vec2& _max, const T _h) const noexcept {
     return root_->overlap(_min, _max, _h);
 }//MQT::MedianQuadTree::check
 
