@@ -82,6 +82,7 @@ namespace MQT {
             T median_, max_, min_;
             bool isFlat_ = false;
             std::vector<Vec2> l_;
+            std::vector<Vec2> m_;
             std::vector<Vec2> h_;
             //----------------
             Bucket(
@@ -209,7 +210,7 @@ void MQT::Detail::Bucket<T, ALLOCATOR>::recompute() {
         for (int32_t n1 = bmin_[1]; n1 < bmax_[1]; ++n1) {
             const int32_t i = n1 + n0 * N_;
             if (i >= int32_t(map_.size())) continue;
-            m.push_back({ map_[i], { n0, n1} });
+            m.push_back({ map_[i], { n0, n1 } });
             max_ = std::max(max_, map_[i]);
             min_ = std::min(min_, map_[i]);
         }
@@ -225,26 +226,40 @@ void MQT::Detail::Bucket<T, ALLOCATOR>::recompute() {
         const int32_t idx = (m.size() + 1) / 2;
         median_ = std::get<0>(m[idx]);
 
+        m_.clear();
         l_.clear();
-        for (int32_t j = 0; j <= idx; ++j)
-            l_.push_back(std::get<1>(m[j]));
+        for (int32_t j = 0; j <= idx; ++j){
+            if(isEqual(std::get<0>(m[j]), median_))
+                m_.push_back(std::get<1>(m[j]));
+            else l_.push_back(std::get<1>(m[j]));
+        }
 
         h_.clear();
-        for (size_t j = idx + 1; j < m.size(); ++j)
-            h_.push_back(std::get<1>(m[j]));
+        for (size_t j = idx + 1; j < m.size(); ++j){
+            if(isEqual(std::get<0>(m[j]), median_))
+                m_.push_back(std::get<1>(m[j]));
+            else h_.push_back(std::get<1>(m[j]));
+        }
 
     } else {
         const int32_t idx1 = m.size() / 2;
         const int32_t idx2 = idx1 + 1;
         median_ = (std::get<0>(m[idx1]) + std::get<0>(m[idx2])) * 0.5;
 
+        m_.clear();
         l_.clear();
-        for (int32_t j = 0; j <= idx1; ++j)
-            l_.push_back(std::get<1>(m[j]));
+        for (int32_t j = 0; j <= idx1; ++j){
+            if(isEqual(std::get<0>(m[j]), median_))
+                m_.push_back(std::get<1>(m[j]));
+            else l_.push_back(std::get<1>(m[j]));
+        }
 
         h_.clear();
-        for (size_t j = idx2; j < m.size(); ++j)
-            h_.push_back(std::get<1>(m[j]));
+        for (size_t j = idx2; j < m.size(); ++j){
+            if(isEqual(std::get<0>(m[j]), median_))
+                m_.push_back(std::get<1>(m[j]));
+            else h_.push_back(std::get<1>(m[j]));
+        }
     }
 
 
@@ -266,17 +281,23 @@ std::tuple<int32_t, int32_t, int32_t> MQT::Detail::Bucket<T, ALLOCATOR>::overlap
     T _h
 ) const noexcept {
 
+    const int32_t min0 = std::max(_min[0], bmin_[0]);
+    const int32_t min1 = std::max(_min[1], bmin_[1]);
+
+    const int32_t max0 = std::min(_max[0], bmax_[0]);
+    const int32_t max1 = std::min(_max[1], bmax_[1]);
+
     const auto contains = [&](int32_t _n0, int32_t _n1) {
-        return _min[0] <= _n0 && _n0 < _max[0] && _min[1] <= _n1 && _n1 < _max[1];
+        return min0 <= _n0 && _n0 < max0 && min1 <= _n1 && _n1 < max1;
     };
 
-    const bool isPartial = _min[0] > bmin_[0] || _max[0] < bmax_[0] || _min[1] > bmin_[1] || _max[1] < bmax_[1];
+    const bool isPartial = !(min0 == bmin_[0] && min1 == bmin_[1] && max0 == bmax_[0] && max1 == bmax_[1]);
 
     if (isFlat_ && !isPartial) {
 
-        if(isEqual(_h, median_)) return { 0, l_.size() + h_.size(), 0 };
-        else if (_h >= median_) return { l_.size() + h_.size(), 0, 0 };
-        else return { 0, 0, l_.size() + h_.size() };
+        if(isEqual(_h, median_)) return { 0, (bmax_[0] - bmin_[0]) * (bmax_[1] - bmin_[1]), 0 };
+        else if (_h >= median_) return { (bmax_[0] - bmin_[0]) * (bmax_[1] - bmin_[1]), 0, 0 };
+        else return { 0, 0, (bmax_[0] - bmin_[0]) * (bmax_[1] - bmin_[1]) };
 
     }
 
@@ -287,12 +308,12 @@ std::tuple<int32_t, int32_t, int32_t> MQT::Detail::Bucket<T, ALLOCATOR>::overlap
 
         int32_t l = 0, m = 0, h = 0;
         // n1: x, n0: y
-        for (int32_t n0 = std::max(bmin_[0], _min[0]); n0 < std::min(bmax_[0], _max[0]); ++n0) {
-            for (int32_t n1 = std::max(bmin_[1], _min[1]); n1 < std::min(bmax_[1], _max[1]); ++n1) {
+        for (int32_t n0 = min0; n0 < max0; ++n0) {
+            for (int32_t n1 = min1; n1 < max1; ++n1) {
                 const int32_t i = n1 + n0 * N_;
                 if (i >= int32_t(map_.size())) continue;
                 if(isEqual(map_[i], _h)) m++;
-                if (map_[i] > _h) h++;
+                else if (map_[i] > _h) h++;
                 else l++;
             }
         }
@@ -307,6 +328,15 @@ std::tuple<int32_t, int32_t, int32_t> MQT::Detail::Bucket<T, ALLOCATOR>::overlap
         int32_t low = l_.size();
         int32_t m = 0;
         int32_t high = 0;
+
+        for (const Vec2 pos : m_) {
+            const int32_t i = pos[1] + pos[0] * N_;
+            if (!contains(pos[0], pos[1])) continue;
+
+            if(isEqual(map_[i], _h)) m++;
+            else if (map_[i] > _h) high++;
+            else low++;
+        }
 
         for (const Vec2 pos : h_) {
             const int32_t i = pos[1] + pos[0] * N_;
@@ -324,6 +354,15 @@ std::tuple<int32_t, int32_t, int32_t> MQT::Detail::Bucket<T, ALLOCATOR>::overlap
         int32_t low = 0;
         int32_t m = 0;
         int32_t high = h_.size();
+
+        for (const Vec2 pos : m_) {
+            const int32_t i = pos[1] + pos[0] * N_;
+            if (!contains(pos[0], pos[1])) continue;
+
+            if(isEqual(map_[i], _h)) m++;
+            else if (map_[i] > _h) high++;
+            else low++;
+        }
 
         for (const Vec2 pos : l_) {
             const int32_t i = pos[1] + pos[0] * N_;
@@ -409,19 +448,21 @@ std::tuple<int32_t, int32_t, int32_t> MQT::Detail::Node<T, ALLOCATOR>::overlap(
     T _h
 ) const noexcept {
 
-    const bool isPartial = _min[0] > bmin_[0] || _max[0] < bmax_[0] || _min[1] > bmin_[1] || _max[1] < bmax_[1];
+    if(_max[0] < bmin_[0] || bmax_[0] < _min[0] || _max[1] < bmin_[1] || bmax_[1] < _min[1]) return { 0, 0, 0 };
+
+    const int32_t min0 = std::max(_min[0], bmin_[0]);
+    const int32_t min1 = std::max(_min[1], bmin_[1]);
+
+    const int32_t max0 = std::min(_max[0], bmax_[0]);
+    const int32_t max1 = std::min(_max[1], bmax_[1]);
+
+    const bool isPartial = !(min0 == bmin_[0] && min1 == bmin_[1] && max0 == bmax_[0] && max1 == bmax_[1]);
     const bool isH = _h > max_;
     const bool isM = isEqual(max_, _h);
 
     if (isFlat_) {
 
         if(isPartial){
-
-            const int32_t min0 = std::max(_min[0], bmin_[0]);
-            const int32_t min1 = std::max(_min[1], bmin_[1]);
-
-            const int32_t max0 = std::min(_max[0], bmax_[0]);
-            const int32_t max1 = std::min(_max[1], bmax_[1]);
 
             if (isH) return { (max0 - min0) * (max1 - min1), 0, 0 };
             if (isM) return { 0, (max0 - min0) * (max1 - min1), 0 };
