@@ -640,7 +640,7 @@ void bench_tree() {
             const int32_t height = Dist(10, 500)(rand);
             const int32_t xmin = Dist(0, 7680 - width)(rand);
             const int32_t ymin = Dist(0, 7680 - height)(rand);
-            const double h = std::round(DistD(10., 200.)(rand));
+            const double h = k;
 
             for(int32_t n0 = ymin; n0 <= ymin + height; ++n0){
                 for(int32_t n1 = xmin; n1 <= xmin + width; ++n1){
@@ -652,7 +652,7 @@ void bench_tree() {
 
     }
 
-    const double hh = 1.; // std::round(DistD(10., 200.)(rand));
+    const double hh = 50.; // std::round(DistD(10., 200.)(rand));
 
     std::cout << "-----------------" << std::endl;
 
@@ -683,7 +683,7 @@ void bench_tree() {
         std::cout << std::endl;
         std::cout << "tree 2" << std::endl;
         {
-            MedianQuadTree<double> tree(map, 7680, 7680, 100, 120);
+            MedianQuadTree<double> tree(map, 7680, 7680, 100, 30);
 
             for(int32_t i = 1; i < 50; ++i){
 
