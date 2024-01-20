@@ -18,6 +18,8 @@ endif()
 
 include(FetchContent)
 
+include_directories(include)
+
 add_executable(mqt
    src/main.cpp
 )

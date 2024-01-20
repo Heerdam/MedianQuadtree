@@ -664,7 +664,7 @@ void bench_tree() {
             for(int32_t i = 1; i < 50; ++i){
 
                 double tmp = 0.;
-                for(int32_t j = 0; j < 12; ++j){
+                for(int32_t j = 0; j < 3; ++j){
                     const auto start = std::chrono::high_resolution_clock::now();
                     const auto[l1, m1, h1] = tree.check_overlap(Vec2{i * 50, i * 50}, Vec2{7680 - i * 50, 7680 - i * 50}, hh);
                     const std::chrono::duration<double> ee = std::chrono::high_resolution_clock::now() - start;          
@@ -672,54 +672,51 @@ void bench_tree() {
                     t += l1;
                 }
 
-                std::cout << tmp / 12. << std::endl;
+                std::cout << tmp / 3. << std::endl;
 
             }
         }
 
-        return;
+        // std::cout << std::endl;
+        // std::cout << "tree 2" << std::endl;
+        // {
+        //     MedianQuadTree<double> tree(map, 7680, 7680, 100, 30);
 
+        //     for(int32_t i = 1; i < 50; ++i){
 
-        std::cout << std::endl;
-        std::cout << "tree 2" << std::endl;
-        {
-            MedianQuadTree<double> tree(map, 7680, 7680, 100, 30);
+        //         double tmp = 0.;
+        //         for(int32_t j = 0; j < 12; ++j){
+        //             const auto start = std::chrono::high_resolution_clock::now();
+        //             const auto[l1, m1, h1] = tree.check_overlap(Vec2{i * 50, i * 50}, Vec2{7680 - i * 50, 7680 - i * 50}, hh);
+        //             const std::chrono::duration<double> ee = std::chrono::high_resolution_clock::now() - start;          
+        //             tmp += ee.count();
+        //             t += l1;
+        //         }
 
-            for(int32_t i = 1; i < 50; ++i){
+        //         std::cout << tmp / 12. << std::endl;
 
-                double tmp = 0.;
-                for(int32_t j = 0; j < 12; ++j){
-                    const auto start = std::chrono::high_resolution_clock::now();
-                    const auto[l1, m1, h1] = tree.check_overlap(Vec2{i * 50, i * 50}, Vec2{7680 - i * 50, 7680 - i * 50}, hh);
-                    const std::chrono::duration<double> ee = std::chrono::high_resolution_clock::now() - start;          
-                    tmp += ee.count();
-                    t += l1;
-                }
+        //     }
+        // }
 
-                std::cout << tmp / 12. << std::endl;
+        // if constexpr(true){
+        //     std::cout << std::endl;
+        //     std::cout << "naive 1" << std::endl;
+        //     for(int32_t i = 1; i < 50; ++i){
 
-            }
-        }
+        //         double tmp = 0.;
+        //         for(int32_t j = 0; j < 12; ++j){
+        //             const auto start = std::chrono::high_resolution_clock::now();
+        //             const auto[l2, m2, h2] = Detail::naive_tester<double>(map, Vec2{i * 50, i * 50}, Vec2{7680 - i * 50, 7680 - i * 50}, 7680, hh);
 
-        if constexpr(true){
-            std::cout << std::endl;
-            std::cout << "naive 1" << std::endl;
-            for(int32_t i = 1; i < 50; ++i){
+        //             const std::chrono::duration<double> ee = std::chrono::high_resolution_clock::now() - start;
+        //             tmp += ee.count();
 
-                double tmp = 0.;
-                for(int32_t j = 0; j < 12; ++j){
-                    const auto start = std::chrono::high_resolution_clock::now();
-                    const auto[l2, m2, h2] = Detail::naive_tester<double>(map, Vec2{i * 50, i * 50}, Vec2{7680 - i * 50, 7680 - i * 50}, 7680, hh);
+        //             t += l2;
+        //         }
+        //         std::cout << tmp / 12. << std::endl;
 
-                    const std::chrono::duration<double> ee = std::chrono::high_resolution_clock::now() - start;
-                    tmp += ee.count();
-
-                    t += l2;
-                }
-                std::cout << tmp / 12. << std::endl;
-
-            }
-        }
+        //     }
+        // }
     }
 
     std::cout << t << std::endl;

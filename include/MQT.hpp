@@ -104,7 +104,8 @@ namespace MQT {
             [[nodiscard]] bool overlap_fast(const Vec2& _min, const Vec2& _max, T _h) const noexcept;
             [[nodiscard]] std::tuple<int32_t, int32_t, int32_t> overlap(const Vec2& _min, const Vec2& _max, T _h) const noexcept;
             [[nodiscard]] int32_t overlap_border(const Vec2& _min, const Vec2& _max, T _h) const noexcept;
-            friend std::ostream& MQT::operator<< (std::ostream& s, const Bucket<T, ALLOCATOR>& t);
+            template<class T_, class ALLOCATOR_> 
+            friend std::ostream& MQT::operator<< (std::ostream& s, const Bucket<T_, ALLOCATOR_>& t);
         };//Bucket
 
         //----------------
@@ -139,7 +140,8 @@ namespace MQT {
             [[nodiscard]] bool overlap_fast(const Vec2& _min, const Vec2& _max, T _h) const noexcept;
             [[nodiscard]] std::tuple<int32_t, int32_t, int32_t> overlap(const Vec2& _min, const Vec2& _max, T _h) const noexcept;
             [[nodiscard]] int32_t overlap_border(const Vec2& _min, const Vec2& _max, T _h) const noexcept;
-            friend std::ostream& MQT::operator<< (std::ostream& s, const Node<T, ALLOCATOR>& t);
+            template<class T_, class ALLOCATOR_> 
+            friend std::ostream& MQT::operator<< (std::ostream& s, const Node<T_, ALLOCATOR_>& t);
         };//Node
 
     }
@@ -160,8 +162,11 @@ namespace MQT {
 
         int32_t idd = 0;
 
-        friend Detail::Node;
-        friend Detail::Bucket;
+        template<class, class> 
+        friend struct Detail::Node;
+
+        template<class, class> 
+        friend struct Detail::Bucket;
 
     public:
         using TYPE = T;
@@ -188,7 +193,8 @@ namespace MQT {
         [[nodiscard]] std::tuple<int32_t, int32_t, int32_t> check_overlap(const Vec2& _min, const Vec2& _max, const T _h) const noexcept;
         [[nodiscard]] int32_t check_border(const Vec& _pos, const Vec2& _ext) const noexcept;
         //----------------
-        friend std::ostream& MQT::operator<< (std::ostream& s, const MedianQuadTree<T, ALLOCATOR>& t);
+        template<class T_, class ALLOCATOR_> 
+        friend std::ostream& MQT::operator<< (std::ostream& s, const MedianQuadTree<T_, ALLOCATOR_>& t);
     };//MedianQuadTree
 
 }//MQT
@@ -271,7 +277,7 @@ bool MQT::Detail::Bucket<T, ALLOCATOR>::overlap_fast(
     const Vec2& _max, 
     T _h
 ) const noexcept {
-
+    return false;
 }//MQT::MedianQuadTree::Bucket::overlap_fast
 
 template<class T, class ALLOCATOR>
@@ -385,7 +391,7 @@ int32_t MQT::Detail::Bucket<T, ALLOCATOR>::overlap_border(
     const Vec2& _max, 
     T _h
 ) const noexcept {
-
+    return 0;
 }//MQT::MedianQuadTree::Bucket::overlap_border
 
 //--------------
@@ -438,7 +444,7 @@ bool MQT::Detail::Node<T, ALLOCATOR>::overlap_fast(
     const Vec2& _max, 
     T _h
 ) const noexcept {
-
+    return false;
 }//MQT::MedianQuadTree::Node::overlap_fast
 
 template<class T, class ALLOCATOR>
@@ -514,7 +520,7 @@ int32_t MQT::Detail::Node<T, ALLOCATOR>::overlap_border(
     const Vec2& _max, 
     T _h
 ) const noexcept {
-
+    return 0;
 }//MQT::MedianQuadTree::Node::overlap_border
 
 //--------------
@@ -625,15 +631,15 @@ bool MQT::MedianQuadTree<T, ALLOCATOR>::check_fast(
     const Vec& _pos, 
     const Vec2& _ext
 ) const noexcept {
-
-}//MQT::MedianQuadTree::check_fast
+    return false;
+}//MQT::MedianQuadTree ::check_fast
 
 template<class T, class ALLOCATOR>
 int32_t MQT::MedianQuadTree<T, ALLOCATOR>::check_border(
     const Vec& _pos, 
     const Vec2& _ext
 ) const noexcept {
-
+    return 0;
 }//MQT::MedianQuadTree::check_border
 
 //----------------------------------------------
