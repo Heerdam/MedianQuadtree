@@ -520,7 +520,6 @@ void test_bucket_node() {
         }
     }
 
-
     //-------------------------------
 
     map.resize(6400*6400);
@@ -724,7 +723,7 @@ void bench_tree() {
 }
 
 int main() {
-    //test_bucket_node();
-    bench_tree();
+    test_bucket_node();
+    //bench_tree();
     return 0;
 }

@@ -363,8 +363,8 @@ std::tuple<int32_t, int32_t, int32_t> MQT::Detail::Bucket<T, ALLOCATOR>::overlap
 
             const int32_t m1 = int32_t(l1 + h1 == 0);
             const int32_t m2 = int32_t(l2 + h2 == 0);
-            const int32_t m3 = int32_t(l3 + h4 == 0);
-            const int32_t m4 = int32_t(l3 + h4 == 0);
+            const int32_t m3 = int32_t(l3 + h3 == 0);
+            const int32_t m4 = int32_t(l4 + h4 == 0);
 
             l += c1 * l1 + c2 * l2 + c3 * l3 + c4 * l4;
             m += c1 * m1 + c2 * m2 + c3 * m3 + c4 * m4;
@@ -390,6 +390,8 @@ std::tuple<int32_t, int32_t, int32_t> MQT::Detail::Bucket<T, ALLOCATOR>::overlap
         }
 
         //---------------
+
+        j = 0;
 
         for(; j < int32_t(h_.size()-3); j+=4){
             const Vec2& p1 = h_[j];
@@ -419,8 +421,8 @@ std::tuple<int32_t, int32_t, int32_t> MQT::Detail::Bucket<T, ALLOCATOR>::overlap
 
             const int32_t m1 = int32_t(l1 + h1 == 0);
             const int32_t m2 = int32_t(l2 + h2 == 0);
-            const int32_t m3 = int32_t(l3 + h4 == 0);
-            const int32_t m4 = int32_t(l3 + h4 == 0);
+            const int32_t m3 = int32_t(l3 + h3 == 0);
+            const int32_t m4 = int32_t(l4 + h4 == 0);
 
             l += c1 * l1 + c2 * l2 + c3 * l3 + c4 * l4;
             m += c1 * m1 + c2 * m2 + c3 * m3 + c4 * m4;
@@ -482,8 +484,8 @@ std::tuple<int32_t, int32_t, int32_t> MQT::Detail::Bucket<T, ALLOCATOR>::overlap
 
             const int32_t m1 = int32_t(l1 + h1 == 0);
             const int32_t m2 = int32_t(l2 + h2 == 0);
-            const int32_t m3 = int32_t(l3 + h4 == 0);
-            const int32_t m4 = int32_t(l3 + h4 == 0);
+            const int32_t m3 = int32_t(l3 + h3 == 0);
+            const int32_t m4 = int32_t(l4 + h4 == 0);
 
             l += c1 * l1 + c2 * l2 + c3 * l3 + c4 * l4;
             m += c1 * m1 + c2 * m2 + c3 * m3 + c4 * m4;
@@ -509,7 +511,7 @@ std::tuple<int32_t, int32_t, int32_t> MQT::Detail::Bucket<T, ALLOCATOR>::overlap
         }
 
         //---------------
-
+        j = 0;
         for(; j < int32_t(l_.size()-3); j+=4){
             const Vec2& p1 = l_[j];
             const Vec2& p2 = l_[j+1];
@@ -538,8 +540,8 @@ std::tuple<int32_t, int32_t, int32_t> MQT::Detail::Bucket<T, ALLOCATOR>::overlap
 
             const int32_t m1 = int32_t(l1 + h1 == 0);
             const int32_t m2 = int32_t(l2 + h2 == 0);
-            const int32_t m3 = int32_t(l3 + h4 == 0);
-            const int32_t m4 = int32_t(l3 + h4 == 0);
+            const int32_t m3 = int32_t(l3 + h3 == 0);
+            const int32_t m4 = int32_t(l4 + h4 == 0);
 
             l += c1 * l1 + c2 * l2 + c3 * l3 + c4 * l4;
             m += c1 * m1 + c2 * m2 + c3 * m3 + c4 * m4;
