@@ -623,7 +623,7 @@ void bench_tree() {
     using DistD = ::std::uniform_real_distribution<double>;
 
     map.resize(7680 * 7680);
-    std::uniform_int_distribution<> dist (0, map.size() - 1);
+    std::uniform_int_distribution<> dist (0, int32_t(map.size() - 1));
     std::fill(map.begin(), map.end(), 0.);
     int32_t t = 0;
 
@@ -664,7 +664,7 @@ void bench_tree() {
             for(int32_t i = 1; i < 50; ++i){
 
                 double tmp = 0.;
-                for(int32_t j = 0; j < 3; ++j){
+                for(int32_t j = 0; j < 12; ++j){
                     const auto start = std::chrono::high_resolution_clock::now();
                     const auto[l1, m1, h1] = tree.check_overlap(Vec2{i * 50, i * 50}, Vec2{7680 - i * 50, 7680 - i * 50}, hh);
                     const std::chrono::duration<double> ee = std::chrono::high_resolution_clock::now() - start;          
@@ -672,7 +672,7 @@ void bench_tree() {
                     t += l1;
                 }
 
-                std::cout << tmp / 3. << std::endl;
+                std::cout << tmp / 12. << std::endl;
 
             }
         }

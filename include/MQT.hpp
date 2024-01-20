@@ -229,7 +229,7 @@ void MQT::Detail::Bucket<T, ALLOCATOR>::recompute() {
     });
 
     if (m.size() % 2 == 0) {
-        const int32_t idx = (m.size() + 1) / 2;
+        const int32_t idx = int32_t(m.size() + 1) / 2;
         median_ = std::get<0>(m[idx]);
 
         m_.clear();
@@ -248,7 +248,7 @@ void MQT::Detail::Bucket<T, ALLOCATOR>::recompute() {
         }
 
     } else {
-        const int32_t idx1 = m.size() / 2;
+        const int32_t idx1 = int32_t(m.size() / 2);
         const int32_t idx2 = idx1 + 1;
         median_ = (std::get<0>(m[idx1]) + std::get<0>(m[idx2])) * 0.5;
 
@@ -317,10 +317,9 @@ std::tuple<int32_t, int32_t, int32_t> MQT::Detail::Bucket<T, ALLOCATOR>::overlap
         for (int32_t n0 = min0; n0 < max0; ++n0) {
             for (int32_t n1 = min1; n1 < max1; ++n1) {
                 const int32_t i = n1 + n0 * N_;
-                if (i >= int32_t(map_.size())) continue;
-                if(isEqual(map_[i], _h)) m++;
+                if(map_[i] < _h) l++;
                 else if (map_[i] > _h) h++;
-                else l++;
+                else m++;
             }
         }
 
@@ -331,55 +330,241 @@ std::tuple<int32_t, int32_t, int32_t> MQT::Detail::Bucket<T, ALLOCATOR>::overlap
     //--------------------
     if (_h > median_) {
 
-        int32_t low = l_.size();
+        int32_t l = int32_t(l_.size());
         int32_t m = 0;
-        int32_t high = 0;
+        int32_t h = 0;
 
-        for (const Vec2 pos : m_) {
-            const int32_t i = pos[1] + pos[0] * N_;
-            if (!contains(pos[0], pos[1])) continue;
+        int32_t j = 0;
+        for(; j < int32_t(m_.size()-3); j+=4){
+            const Vec2& p1 = m_[j];
+            const Vec2& p2 = m_[j+1];
+            const Vec2& p3 = m_[j+2];
+            const Vec2& p4 = m_[j+3];
 
-            if(isEqual(map_[i], _h)) m++;
-            else if (map_[i] > _h) high++;
-            else low++;
+            const int32_t i1 = p1[1] + p1[0] * N_;
+            const int32_t i2 = p2[1] + p2[0] * N_;
+            const int32_t i3 = p3[1] + p3[0] * N_;
+            const int32_t i4 = p4[1] + p4[0] * N_;
+
+            const int32_t c1 = int32_t(contains(p1[0], p1[1]));
+            const int32_t c2 = int32_t(contains(p2[0], p2[1]));
+            const int32_t c3 = int32_t(contains(p3[0], p3[1]));
+            const int32_t c4 = int32_t(contains(p4[0], p4[1]));
+
+            const int32_t l1 = int32_t(map_[i1] < _h);
+            const int32_t l2 = int32_t(map_[i2] < _h);
+            const int32_t l3 = int32_t(map_[i3] < _h);
+            const int32_t l4 = int32_t(map_[i4] < _h);
+
+            const int32_t h1 = int32_t(map_[i1] > _h);
+            const int32_t h2 = int32_t(map_[i2] > _h);
+            const int32_t h3 = int32_t(map_[i3] > _h);
+            const int32_t h4 = int32_t(map_[i4] > _h);
+
+            const int32_t m1 = int32_t(l1 + h1 == 0);
+            const int32_t m2 = int32_t(l2 + h2 == 0);
+            const int32_t m3 = int32_t(l3 + h4 == 0);
+            const int32_t m4 = int32_t(l3 + h4 == 0);
+
+            l += c1 * l1 + c2 * l2 + c3 * l3 + c4 * l4;
+            m += c1 * m1 + c2 * m2 + c3 * m3 + c4 * m4;
+            h += c1 * h1 + c2 * h2 + c3 * h3 + c4 * h4;
         }
 
-        for (const Vec2 pos : h_) {
-            const int32_t i = pos[1] + pos[0] * N_;
-            if (!contains(pos[0], pos[1])) continue;
+        for(; j < int32_t(m_.size()); j++){
+            const Vec2& p1 = m_[j];
 
-            if(isEqual(map_[i], _h)) m++;
-            else if (map_[i] > _h) high++;
-            else low++;
+            const int32_t i1 = p1[1] + p1[0] * N_;
+
+            const int32_t c1 = int32_t(contains(p1[0], p1[1]));
+
+            const int32_t l1 = int32_t(map_[i1] < _h);
+
+            const int32_t h1 = int32_t(map_[i1] > _h);
+
+            const int32_t m1 = int32_t(l1 + h1 == 0);
+
+            l += c1 * l1;
+            m += c1 * m1;
+            h += c1 * h1;
         }
 
-        return { low, m, high };
+        //---------------
+
+        for(; j < int32_t(h_.size()-3); j+=4){
+            const Vec2& p1 = h_[j];
+            const Vec2& p2 = h_[j+1];
+            const Vec2& p3 = h_[j+2];
+            const Vec2& p4 = h_[j+3];
+
+            const int32_t i1 = p1[1] + p1[0] * N_;
+            const int32_t i2 = p2[1] + p2[0] * N_;
+            const int32_t i3 = p3[1] + p3[0] * N_;
+            const int32_t i4 = p4[1] + p4[0] * N_;
+
+            const int32_t c1 = int32_t(contains(p1[0], p1[1]));
+            const int32_t c2 = int32_t(contains(p2[0], p2[1]));
+            const int32_t c3 = int32_t(contains(p3[0], p3[1]));
+            const int32_t c4 = int32_t(contains(p4[0], p4[1]));
+
+            const int32_t l1 = int32_t(map_[i1] < _h);
+            const int32_t l2 = int32_t(map_[i2] < _h);
+            const int32_t l3 = int32_t(map_[i3] < _h);
+            const int32_t l4 = int32_t(map_[i4] < _h);
+
+            const int32_t h1 = int32_t(map_[i1] > _h);
+            const int32_t h2 = int32_t(map_[i2] > _h);
+            const int32_t h3 = int32_t(map_[i3] > _h);
+            const int32_t h4 = int32_t(map_[i4] > _h);
+
+            const int32_t m1 = int32_t(l1 + h1 == 0);
+            const int32_t m2 = int32_t(l2 + h2 == 0);
+            const int32_t m3 = int32_t(l3 + h4 == 0);
+            const int32_t m4 = int32_t(l3 + h4 == 0);
+
+            l += c1 * l1 + c2 * l2 + c3 * l3 + c4 * l4;
+            m += c1 * m1 + c2 * m2 + c3 * m3 + c4 * m4;
+            h += c1 * h1 + c2 * h2 + c3 * h3 + c4 * h4;
+        }
+
+        for(; j < int32_t(h_.size()); j++){
+            const Vec2& p1 = h_[j];
+
+            const int32_t i1 = p1[1] + p1[0] * N_;
+
+            const int32_t c1 = int32_t(contains(p1[0], p1[1]));
+
+            const int32_t l1 = int32_t(map_[i1] < _h);
+
+            const int32_t h1 = int32_t(map_[i1] > _h);
+
+            const int32_t m1 = int32_t(l1 + h1 == 0);
+
+            l += c1 * l1;
+            m += c1 * m1;
+            h += c1 * h1;
+        }
+
+        return { l, m, h };
 
     } else {
 
-        int32_t low = 0;
+        int32_t l = 0;
         int32_t m = 0;
-        int32_t high = h_.size();
+        int32_t h = int32_t(h_.size());
 
-        for (const Vec2 pos : m_) {
-            const int32_t i = pos[1] + pos[0] * N_;
-            if (!contains(pos[0], pos[1])) continue;
+        int32_t j = 0;
+        for(; j < int32_t(m_.size()-3); j+=4){
+            const Vec2& p1 = m_[j];
+            const Vec2& p2 = m_[j+1];
+            const Vec2& p3 = m_[j+2];
+            const Vec2& p4 = m_[j+3];
 
-            if(isEqual(map_[i], _h)) m++;
-            else if (map_[i] > _h) high++;
-            else low++;
+            const int32_t i1 = p1[1] + p1[0] * N_;
+            const int32_t i2 = p2[1] + p2[0] * N_;
+            const int32_t i3 = p3[1] + p3[0] * N_;
+            const int32_t i4 = p4[1] + p4[0] * N_;
+
+            const int32_t c1 = int32_t(contains(p1[0], p1[1]));
+            const int32_t c2 = int32_t(contains(p2[0], p2[1]));
+            const int32_t c3 = int32_t(contains(p3[0], p3[1]));
+            const int32_t c4 = int32_t(contains(p4[0], p4[1]));
+
+            const int32_t l1 = int32_t(map_[i1] < _h);
+            const int32_t l2 = int32_t(map_[i2] < _h);
+            const int32_t l3 = int32_t(map_[i3] < _h);
+            const int32_t l4 = int32_t(map_[i4] < _h);
+
+            const int32_t h1 = int32_t(map_[i1] > _h);
+            const int32_t h2 = int32_t(map_[i2] > _h);
+            const int32_t h3 = int32_t(map_[i3] > _h);
+            const int32_t h4 = int32_t(map_[i4] > _h);
+
+            const int32_t m1 = int32_t(l1 + h1 == 0);
+            const int32_t m2 = int32_t(l2 + h2 == 0);
+            const int32_t m3 = int32_t(l3 + h4 == 0);
+            const int32_t m4 = int32_t(l3 + h4 == 0);
+
+            l += c1 * l1 + c2 * l2 + c3 * l3 + c4 * l4;
+            m += c1 * m1 + c2 * m2 + c3 * m3 + c4 * m4;
+            h += c1 * h1 + c2 * h2 + c3 * h3 + c4 * h4;
         }
 
-        for (const Vec2 pos : l_) {
-            const int32_t i = pos[1] + pos[0] * N_;
-            if (!contains(pos[0], pos[1])) continue;
+        for(; j < int32_t(m_.size()); j++){
+            const Vec2& p1 = m_[j];
 
-            if(isEqual(map_[i], _h)) m++;
-            else if (map_[i] > _h) high++;
-            else low++;
+            const int32_t i1 = p1[1] + p1[0] * N_;
+
+            const int32_t c1 = int32_t(contains(p1[0], p1[1]));
+
+            const int32_t l1 = int32_t(map_[i1] < _h);
+
+            const int32_t h1 = int32_t(map_[i1] > _h);
+
+            const int32_t m1 = int32_t(l1 + h1 == 0);
+
+            l += c1 * l1;
+            m += c1 * m1;
+            h += c1 * h1;
         }
 
-        return { low, m, high };
+        //---------------
+
+        for(; j < int32_t(l_.size()-3); j+=4){
+            const Vec2& p1 = l_[j];
+            const Vec2& p2 = l_[j+1];
+            const Vec2& p3 = l_[j+2];
+            const Vec2& p4 = l_[j+3];
+
+            const int32_t i1 = p1[1] + p1[0] * N_;
+            const int32_t i2 = p2[1] + p2[0] * N_;
+            const int32_t i3 = p3[1] + p3[0] * N_;
+            const int32_t i4 = p4[1] + p4[0] * N_;
+
+            const int32_t c1 = int32_t(contains(p1[0], p1[1]));
+            const int32_t c2 = int32_t(contains(p2[0], p2[1]));
+            const int32_t c3 = int32_t(contains(p3[0], p3[1]));
+            const int32_t c4 = int32_t(contains(p4[0], p4[1]));
+
+            const int32_t l1 = int32_t(map_[i1] < _h);
+            const int32_t l2 = int32_t(map_[i2] < _h);
+            const int32_t l3 = int32_t(map_[i3] < _h);
+            const int32_t l4 = int32_t(map_[i4] < _h);
+
+            const int32_t h1 = int32_t(map_[i1] > _h);
+            const int32_t h2 = int32_t(map_[i2] > _h);
+            const int32_t h3 = int32_t(map_[i3] > _h);
+            const int32_t h4 = int32_t(map_[i4] > _h);
+
+            const int32_t m1 = int32_t(l1 + h1 == 0);
+            const int32_t m2 = int32_t(l2 + h2 == 0);
+            const int32_t m3 = int32_t(l3 + h4 == 0);
+            const int32_t m4 = int32_t(l3 + h4 == 0);
+
+            l += c1 * l1 + c2 * l2 + c3 * l3 + c4 * l4;
+            m += c1 * m1 + c2 * m2 + c3 * m3 + c4 * m4;
+            h += c1 * h1 + c2 * h2 + c3 * h3 + c4 * h4;
+        }
+
+        for(; j < int32_t(l_.size()); j++){
+            const Vec2& p1 = l_[j];
+
+            const int32_t i1 = p1[1] + p1[0] * N_;
+
+            const int32_t c1 = int32_t(contains(p1[0], p1[1]));
+
+            const int32_t l1 = int32_t(map_[i1] < _h);
+
+            const int32_t h1 = int32_t(map_[i1] > _h);
+
+            const int32_t m1 = int32_t(l1 + h1 == 0);
+
+            l += c1 * l1;
+            m += c1 * m1;
+            h += c1 * h1;
+        }
+
+        return { l, m, h };
 
     }
 
