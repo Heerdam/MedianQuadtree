@@ -215,7 +215,7 @@ void MQT::Detail::Bucket<T, ALLOCATOR>::recompute() {
     for (int32_t n0 = bmin_[0]; n0 < bmax_[0]; ++n0) {
         for (int32_t n1 = bmin_[1]; n1 < bmax_[1]; ++n1) {
             const int32_t i = n1 + n0 * N_;
-            if (i >= int32_t(map_.size())) continue;
+            //if (i >= int32_t(map_.size())) continue;
             m.push_back({ map_[i], { n0, n1 } });
             max_ = std::max(max_, map_[i]);
             min_ = std::min(min_, map_[i]);
@@ -321,8 +321,8 @@ std::tuple<int32_t, int32_t, int32_t> MQT::Detail::Bucket<T, ALLOCATOR>::overlap
                 else if (map_[i] > _h) h++;
                 else m++;
             }
-        }
 
+        }
         return { l, m, h };
 
     }

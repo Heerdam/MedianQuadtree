@@ -723,7 +723,7 @@ void bench_tree() {
 }
 
 int main() {
-    test_bucket_node();
-    //bench_tree();
+    //test_bucket_node();
+    bench_tree();
     return 0;
 }
