@@ -3,6 +3,7 @@
 #include <random>
 
 #include <MQT.hpp>
+#include <MQT2.hpp>
 
 void test_bucket_node() {
     using namespace MQT;
@@ -722,8 +723,49 @@ void bench_tree() {
 
 }
 
+#include <bitset>
+
+void morton_test() {
+
+    using namespace libmorton;
+
+    for(int32_t y = 0; y < 10; ++y){
+        for(int32_t x = 0; x < 10; ++x){
+
+            const auto key = morton2D_64_encode(x, y);
+
+            std::cout << "[" << x << ", " << y << "] " << std::bitset<10>(key) << std::endl;
+
+            
+        } 
+    }
+
+
+
+}
+
+void mqt2() {
+
+    using namespace MQT2;
+
+    std::vector<double> map;
+
+    MedianQuadTree<double, 5> tree (map, 80);
+
+
+}
+
 int main() {
     //test_bucket_node();
-    bench_tree();
+    //bench_tree();
+    //morton_test();
+    /*
+        1 
+        4 - 5
+        4*4 - 21
+        4*4*4
+    */
+
+    mqt2();
     return 0;
 }

@@ -1,5 +1,5 @@
 
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.3)
 
 project(Test)
 
@@ -18,14 +18,31 @@ endif()
 
 include(FetchContent)
 
-include_directories(include)
-
 add_executable(mqt
    src/main.cpp
 )
 
-target_include_directories(mqt PUBLIC {CMAKE_CURRENT_SOURCE_DIR}/../include )
+# ------------------ LIBMORTON ------------------
+# message(STATUS "Fetching libmorton...")
+# FetchContent_Declare(
+#     libmorton 
+#    GIT_REPOSITORY      https://github.com/Forceflow/libmorton.git
+#     GIT_TAG             v0.2.12
+# )
+# set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+# FetchContent_MakeAvailable(libmorton)
+
+# ------------------ ROBIN-MAP ------------------
+# message(STATUS "Fetching robin map...")
+# FetchContent_Declare(robin_map
+#   GIT_REPOSITORY        https://github.com/Tessil/robin-map.git
+#   GIT_TAG               v1.2.1
+# )
+# FetchContent_MakeAvailable(robin_map)
+
+target_include_directories(mqt PUBLIC include )
 
 target_link_libraries(mqt
-  
+# 	libmorton
+# 	tsl::robin_map
 )
