@@ -738,7 +738,7 @@ void MQT2_tester() {
     }
 
     {
-        MedianQuadTree<double, 15> tree(map, 40);
+        MedianQuadTree<double, 10> tree(map, 40);
         //std::cout << tree << std::endl;
         std::cout << "----- Tree single box -----" << std::endl;
 
@@ -821,7 +821,7 @@ void MQT2_tester() {
     }
 
     {
-        MedianQuadTree<double, 15> tree(map, 40);
+        MedianQuadTree<double, 10> tree(map, 40);
         //std::cout << tree << std::endl;
         std::cout << "----- Tree checker -----" << std::endl;
 
@@ -896,14 +896,12 @@ void MQT2_tester() {
         }
     }
 
-    return;
-
     //-------------------------------
 
     map.resize(6400*6400);
     std::fill(map.begin(), map.end(), 0.);
 
-    MedianQuadTree<double, 15>tree1(map, 6400);
+    MedianQuadTree<double, 25>tree1(map, 6400);
 
     using Dist = ::std::uniform_int_distribution<>;
     using Rand = std::mt19937_64;
@@ -913,6 +911,11 @@ void MQT2_tester() {
 
     int32_t suc = 0;
     int32_t fail = 0;
+
+    const int32_t bc = 6400 / 25;
+    std::vector<bool> mm;
+    mm.resize(bc * bc);
+    std::fill(mm.begin(), mm.end(), true);
 
     for(int32_t k = 0; k < 100; ++k){
 
@@ -931,7 +934,7 @@ void MQT2_tester() {
             }
         }
 
-        //TODO tree1.recompute();
+        tree1.recompute(mm);
 
         //----------------
 
@@ -969,17 +972,188 @@ void MQT2_tester() {
     std::cout << "Fail: " << fail << std::endl;
 }
 
+void bench_tree2() {
+    using namespace MQT2;
+
+    std::mt19937_64 rand(1234567890);
+
+    std::vector<double> map;
+    // map.resize(1000 * 1000);
+    // std::fill(map.begin(), map.end(), 0.);
+
+    
+
+    // for(int32_t i = 0; i < 1000; ++i)
+    //     map[dist(rand)] = 2.;
+
+    // int32_t t = 0;
+    // for(int32_t i = 1; i < 21; ++i){
+    //     MedianQuadTree<double> tree(map, 1000, 1000, 100, 5 * i);
+
+    //     const auto start = std::chrono::high_resolution_clock::now();
+    //     const auto[l, m, h] = tree.check_overlap(Vec2{250, 200}, Vec2{750, 700}, 1.);
+    //     const std::chrono::duration<double> ee = std::chrono::high_resolution_clock::now() - start;
+    //     std::cout << i << " - " << ee.count() << std::endl;
+    //     t += l;
+    // }
+   
+
+    using Dist = ::std::uniform_int_distribution<>;
+    using Rand = std::mt19937_64;
+    using DistD = ::std::uniform_real_distribution<double>;
+
+    map.resize(7680 * 7680);
+    std::uniform_int_distribution<> dist (0, int32_t(map.size() - 1));
+    std::fill(map.begin(), map.end(), 0.);
+    int32_t t = 0;
+
+    if constexpr(false){
+        for(int32_t i = 0; i < 2000 * 7680; ++i)
+            map[dist(rand)] = 2.;
+
+    }
+
+    for(int32_t k = 0; k < 100; ++k){
+
+        {
+            const int32_t width = Dist(10, 500)(rand);
+            const int32_t height = Dist(10, 500)(rand);
+            const int32_t xmin = Dist(0, 7680 - width)(rand);
+            const int32_t ymin = Dist(0, 7680 - height)(rand);
+            const double h = k;
+
+            for(int32_t n0 = ymin; n0 <= ymin + height; ++n0){
+                for(int32_t n1 = xmin; n1 <= xmin + width; ++n1){
+                    const int32_t i = n1 + n0 * 7680;
+                    map[i] = h;
+                }
+            }
+        }
+
+    }
+
+    const double hh = 50.; // std::round(DistD(10., 200.)(rand));
+
+    std::cout << "-----------------" << std::endl;
+
+    {
+        std::cout << "tree 1" << std::endl;
+        {
+            MedianQuadTree<double, 15> tree(map, 7680);
+
+            for(int32_t i = 1; i < 50; ++i){
+
+                double tmp = 0.;
+                for(int32_t j = 0; j < 12; ++j){
+                    const auto start = std::chrono::high_resolution_clock::now();
+                    const auto[l1, m1, h1] = tree.check_overlap(Vec2{i * 50, i * 50}, Vec2{7680 - i * 50, 7680 - i * 50}, hh);
+                    const std::chrono::duration<double> ee = std::chrono::high_resolution_clock::now() - start;          
+                    tmp += ee.count();
+                    t += l1;
+                }
+
+                std::cout << tmp / 12. << std::endl;
+
+            }
+        }
+
+        // std::cout << std::endl;
+        // std::cout << "tree 2" << std::endl;
+        // {
+        //     MedianQuadTree<double> tree(map, 7680, 7680, 100, 30);
+
+        //     for(int32_t i = 1; i < 50; ++i){
+
+        //         double tmp = 0.;
+        //         for(int32_t j = 0; j < 12; ++j){
+        //             const auto start = std::chrono::high_resolution_clock::now();
+        //             const auto[l1, m1, h1] = tree.check_overlap(Vec2{i * 50, i * 50}, Vec2{7680 - i * 50, 7680 - i * 50}, hh);
+        //             const std::chrono::duration<double> ee = std::chrono::high_resolution_clock::now() - start;          
+        //             tmp += ee.count();
+        //             t += l1;
+        //         }
+
+        //         std::cout << tmp / 12. << std::endl;
+
+        //     }
+        // }
+
+        // if constexpr(true){
+        //     std::cout << std::endl;
+        //     std::cout << "naive 1" << std::endl;
+        //     for(int32_t i = 1; i < 50; ++i){
+
+        //         double tmp = 0.;
+        //         for(int32_t j = 0; j < 12; ++j){
+        //             const auto start = std::chrono::high_resolution_clock::now();
+        //             const auto[l2, m2, h2] = Detail::naive_tester<double>(map, Vec2{i * 50, i * 50}, Vec2{7680 - i * 50, 7680 - i * 50}, 7680, hh);
+
+        //             const std::chrono::duration<double> ee = std::chrono::high_resolution_clock::now() - start;
+        //             tmp += ee.count();
+
+        //             t += l2;
+        //         }
+        //         std::cout << tmp / 12. << std::endl;
+
+        //     }
+        // }
+    }
+
+    std::cout << t << std::endl;
+
+}
+
+void idx_test() {
+
+    const auto idx_n = [](const int32_t _level, const int32_t _idx)->int32_t {
+        return 4 * _idx + 1;
+    };
+
+    const auto idx_b = [](const int32_t _level, const int32_t _idx)->int32_t {
+        return int32_t(4. * double(_idx) - 4. * std::pow(4., _level - 1) / 3. + 4./3.);
+    };
+
+    std::queue<std::pair<int32_t, int32_t>> q;
+    q.push({0, 0});
+
+    while(!q.empty()){
+
+        const auto[idx, lvl] = q.front();
+        q.pop();
+
+        std::cout << "l: " << lvl << " i: " << idx << std::endl;
+
+        if(lvl < 2){
+            const int32_t c1 = 4 * idx + 1;
+            const int32_t c2 = c1 + 1;
+            const int32_t c3 = c2 + 1;
+            const int32_t c4 = c3 + 1;
+
+            q.push({ c1, lvl + 1 });
+            q.push({ c2, lvl + 1 });
+            q.push({ c3, lvl + 1 });
+            q.push({ c4, lvl + 1 });
+        }
+
+    }
+
+    std::cout << std::endl;
+
+    for(int32_t i = 5; i < 21; ++i){
+        std::cout << idx_b(3, i) << std::endl;
+    }
+
+}
+
 int main() {
     //test_bucket_node();
     //bench_tree();
+    bench_tree2();
     //morton_test();
-    MQT2_tester();
-    /*
-        1 
-        4 - 5
-        4*4 - 21
-        4*4*4
-    */
+    //MQT2_tester();
+
+    //idx_test();
+
 
     return 0;
 }
