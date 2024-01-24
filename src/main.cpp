@@ -936,9 +936,17 @@ void MQT2_tester() {
                         map[i] = k;
                     }
                 }
-            }
 
-            tree1.recompute(mm);
+                std::fill(mm.begin(), mm.end(), false);
+                for (int32_t n1 = xmin / 25; n1 <= std::min((xmin + width) / 25 + 1, bc - 1); ++n1) {
+                    for (int32_t n0 = ymin / 25; n0 <= std::min((ymin + height) / 25 + 1, bc - 1); ++n0) {         
+                        const int32_t iid = n0 + n1 * bc;
+                        mm[iid] = true;
+                    }
+                }
+
+                tree1.recompute(mm);
+            }
 
             //----------------
 
