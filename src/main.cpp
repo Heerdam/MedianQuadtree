@@ -1087,7 +1087,9 @@ void bench_tree2() {
     std::cout << seed << std::endl;
     std::mt19937_64 rand(seed);
 
-    std::vector<double> map;
+    using SCALAR = float;
+
+    std::vector<SCALAR> map;
     // map.resize(1000 * 1000);
     // std::fill(map.begin(), map.end(), 0.);
 
@@ -1110,7 +1112,7 @@ void bench_tree2() {
 
     using Dist = ::std::uniform_int_distribution<>;
     using Rand = std::mt19937_64;
-    using DistD = ::std::uniform_real_distribution<double>;
+    using DistD = ::std::uniform_real_distribution<SCALAR>;
 
     map.resize(7680 * 7680);
     std::uniform_int_distribution<> dist (0, int32_t(map.size() - 1));
@@ -1130,7 +1132,7 @@ void bench_tree2() {
             const int32_t height = Dist(10, 500)(rand);
             const int32_t xmin = Dist(0, 7680 - width)(rand);
             const int32_t ymin = Dist(0, 7680 - height)(rand);
-            const double h = k;
+            const SCALAR h = k;
 
             for(int32_t n0 = ymin; n0 <= ymin + height; ++n0){
                 for(int32_t n1 = xmin; n1 <= xmin + width; ++n1){
@@ -1142,22 +1144,22 @@ void bench_tree2() {
 
     }
 
-    const double hh = 50.; // std::round(DistD(10., 200.)(rand));
+    const SCALAR hh = 50.; // std::round(DistD(10., 200.)(rand));
 
     std::cout << "-----------------" << std::endl;
 
     {
         std::cout << "tree 1" << std::endl;
         {
-            MedianQuadTree<double, 15> tree(map, 7680);
+            MedianQuadTree<SCALAR, 15> tree(map, 7680);
 
             for(int32_t i = 1; i < 50; ++i){
 
-                double tmp = 0.;
+                SCALAR tmp = 0.;
                 for(int32_t j = 0; j < 12; ++j){
                     const auto start = std::chrono::high_resolution_clock::now();
                     const auto[l1, m1, h1] = tree.check_overlap(Vec2{i * 50, i * 50}, Vec2{7680 - i * 50, 7680 - i * 50}, hh);
-                    const std::chrono::duration<double> ee = std::chrono::high_resolution_clock::now() - start;          
+                    const std::chrono::duration<SCALAR> ee = std::chrono::high_resolution_clock::now() - start;          
                     tmp += ee.count();
                     t += l1;
                 }
@@ -1258,17 +1260,16 @@ void idx_test() {
 void depth_test() {
 
     int32_t BUCKET_SIZE = 5;
-    int32_t w = 1280;
+    int32_t w = 1600;
 
     for(int32_t i = 0; i < 10; ++i){
         const int32_t bc = w / BUCKET_SIZE;
-        const double d = std::log(bc) / std::log(2);
-        const int32_t max_level_ = int32_t(std::round(d)) + 1;
+        const int32_t max_level_ = int32_t(std::round(std::log(bc) / std::log(2))) + 1;
 
         std::cout << "---------" << std::endl;
         std::cout << BUCKET_SIZE << std::endl;
-        std::cout << bc << std::endl;
-        std::cout << max_level_ << " (" << d << ")" << std::endl;
+        //std::cout << bc << std::endl;
+        std::cout << max_level_ << std::endl;
 
         BUCKET_SIZE *= 2;
     }
@@ -1283,7 +1284,7 @@ int main() {
 
     //idx_test();
 
-    depth_test();
+    //depth_test();
 
 
     return 0;
