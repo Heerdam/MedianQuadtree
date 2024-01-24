@@ -899,10 +899,102 @@ void MQT2_tester() {
     //-------------------------------
 
     {
+        constexpr int32_t size = 960;
+        map.resize(size*size);
+        std::fill(map.begin(), map.end(), 0.);
+
+        MedianQuadTree<double, 15>tree1(map, size);
+
+        std::cout << "Tree size 15" << std::endl;
+
+        using Dist = ::std::uniform_int_distribution<>;
+        using Rand = std::mt19937_64;
+        using DistD = ::std::uniform_real_distribution<double>;
+
+        std::random_device rd;
+        const auto seed = rd();
+        std::cout << seed << std::endl;
+        std::mt19937_64 rnd(seed);
+
+        int32_t suc = 0;
+        int32_t fail = 0;
+
+        const int32_t bc = size / 15;
+        std::vector<bool> mm;
+        mm.resize(bc * bc);
+        std::fill(mm.begin(), mm.end(), true);
+
+        for(int32_t k = 0; k < 100; ++k){
+
+            {
+                const int32_t width = Dist(10, size/4)(rnd);
+                const int32_t height = Dist(10, size/4)(rnd);
+                const int32_t xmin = Dist(0, size - width)(rnd);
+                const int32_t ymin = Dist(0, size - height)(rnd);
+                const double h = std::round(DistD(10., 200.)(rnd));
+
+                for(int32_t n0 = ymin; n0 <= ymin + height; ++n0){
+                    for(int32_t n1 = xmin; n1 <= xmin + width; ++n1){
+                        const int32_t i = n1 + n0 * size;
+                        map[i] = k;
+                    }
+                }
+
+                std::fill(mm.begin(), mm.end(), false);
+                for (int32_t n1 = xmin / 15; n1 <= std::min((xmin + width) / 15 + 1, bc - 1); ++n1) {
+                    for (int32_t n0 = ymin / 15; n0 <= std::min((ymin + height) / 15 + 1, bc - 1); ++n0) {         
+                        const int32_t iid = n0 + n1 * bc;
+                        mm[iid] = true;
+                    }
+                }
+
+                tree1.recompute(mm);
+            }
+
+            //----------------
+
+            
+            for(int32_t j = 0; j < 100; ++j){
+
+                const int32_t width = Dist(250, size/2 - 2)(rnd);
+                const int32_t height = Dist(250, size/2 - 2)(rnd);
+                const int32_t n0 = Dist(width + 1, size - width - 1)(rnd);
+                const int32_t n1 = Dist(height + 1, size - height - 1)(rnd);
+                const double h = std::round(DistD(10., 200.)(rnd));
+
+                const auto[l1, m1, h1] = tree1.check_overlap(Vec2{n0 - width, n1 - height}, Vec2{n0 + width, n1 + height}, h);
+                const auto[l2, m2, h2] = MQT::Detail::naive_tester<double>(map, Vec2{n0 - width, n1 - height}, Vec2{n0 + width, n1 + height}, size, h);
+
+                if(l1 == l2 && m1 == m2 && h1 == h2) suc++;
+                else{
+                    std::cout << "----" << std::endl;
+                    std::cout << n0 - width << ", " << n1 - height << std::endl;
+                    std::cout << n0 + width << ", " << n1 + height << std::endl;
+                    std::cout << width << ", " << height << std::endl;
+                    std::cout << h << std::endl;
+                    std::cout << l1 << ", " << m1 << ", " << h1 << "(" << l1 + m1 + h1 << ")" << std::endl;
+                    std::cout << l2 << ", " << m2 << ", " << h2 << "(" << l2 + m2 + h2 << ")" << std::endl;
+                    std::cout << "----" << std::endl;
+                    fail++;
+                } 
+            }
+
+            std::cout << "\r" << k;
+
+        }
+
+        std::cout << "\rSuccess: " << suc << std::endl;
+        std::cout << "Fail: " << fail << std::endl;
+
+    }
+
+    {
         map.resize(6400*6400);
         std::fill(map.begin(), map.end(), 0.);
 
         MedianQuadTree<double, 25>tree1(map, 6400);
+
+        std::cout << "Tree size 25" << std::endl;
 
         using Dist = ::std::uniform_int_distribution<>;
         using Rand = std::mt19937_64;
@@ -1163,14 +1255,35 @@ void idx_test() {
 
 }
 
+void depth_test() {
+
+    int32_t BUCKET_SIZE = 5;
+    int32_t w = 1280;
+
+    for(int32_t i = 0; i < 10; ++i){
+        const int32_t bc = w / BUCKET_SIZE;
+        const double d = std::log(bc) / std::log(2);
+        const int32_t max_level_ = int32_t(std::round(d)) + 1;
+
+        std::cout << "---------" << std::endl;
+        std::cout << BUCKET_SIZE << std::endl;
+        std::cout << bc << std::endl;
+        std::cout << max_level_ << " (" << d << ")" << std::endl;
+
+        BUCKET_SIZE *= 2;
+    }
+}
+
 int main() {
     //test_bucket_node();
     //bench_tree();
     //bench_tree2();
     //morton_test();
-    MQT2_tester();
+    //MQT2_tester();
 
     //idx_test();
+
+    depth_test();
 
 
     return 0;

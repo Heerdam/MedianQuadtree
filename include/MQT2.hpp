@@ -142,7 +142,7 @@ MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::MedianQuadTree(
     assert(_n%BUCKET_SIZE == 0);
     //-----------------
     const int32_t bc = _n / BUCKET_SIZE;
-    max_level_ = int32_t(std::log(bc) / std::log(2)) + 1;
+    max_level_ = int32_t( std::round(std::log(bc) / std::log(2)) ) + 1;
 
     const int32_t dc = int32_t((std::pow(4, max_level_ - 1) - 1) / 3);
 
