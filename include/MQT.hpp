@@ -329,7 +329,7 @@ std::tuple<int32_t, int32_t, int32_t> MQT::Detail::Bucket<T, ALLOCATOR>::overlap
 
     if (_h > median_) {
 
-        int32_t low = l_.size();
+        int32_t low = int32_t(l_.size());
         int32_t m = 0;
         int32_t high = 0;
 
@@ -357,7 +357,7 @@ std::tuple<int32_t, int32_t, int32_t> MQT::Detail::Bucket<T, ALLOCATOR>::overlap
 
         int32_t low = 0;
         int32_t m = 0;
-        int32_t high = h_.size();
+        int32_t high = int32_t(h_.size());
 
         for (const Vec2 pos : m_) {
             const int32_t i = pos[1] + pos[0] * N_;

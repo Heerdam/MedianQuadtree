@@ -93,7 +93,7 @@ namespace MQT2 {
         std::tuple<int32_t, int32_t, int32_t> impl_overlap(
             const Vec2& _min,
             const Vec2& _max,
-            const int32_t _h,
+            const T _h,
             const int32_t _idx, 
             const int32_t _level, 
             const Detail::Node<T, SIZE, ALLOCATOR>& _node
@@ -102,7 +102,7 @@ namespace MQT2 {
         std::tuple<int32_t, int32_t, int32_t> impl_overlap(
             const Vec2& _min,
             const Vec2& _max,
-            const int32_t _h,
+            const T _h,
             const Detail::Bucket<T, SIZE, ALLOCATOR>& _bucket
         ) const;
 
@@ -144,7 +144,7 @@ MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::MedianQuadTree(
     const int32_t bc = _n / BUCKET_SIZE;
     max_level_ = int32_t(std::log(bc) / std::log(2)) + 1;
 
-    const int32_t dc = (std::pow(4, max_level_ - 1) - 1) / 3;
+    const int32_t dc = int32_t((std::pow(4, max_level_ - 1) - 1) / 3);
 
     n_.resize(dc);
     b_.resize(bc * bc);
@@ -291,7 +291,7 @@ template<class T, int32_t SIZE, class ALLOCATOR>
 std::tuple<int32_t, int32_t, int32_t> MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::impl_overlap(
     const Vec2& _min,
     const Vec2& _max,
-    const int32_t _h,
+    const T _h,
     const int32_t _idx, 
     const int32_t _level, 
     const Detail::Node<T, SIZE, ALLOCATOR>& _n
@@ -363,7 +363,7 @@ template<class T, int32_t SIZE, class ALLOCATOR>
 std::tuple<int32_t, int32_t, int32_t> MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::impl_overlap(
     const Vec2& _min,
     const Vec2& _max,
-    const int32_t _h,
+    const T _h,
     const Detail::Bucket<T, SIZE, ALLOCATOR>& _b
 ) const{
     using namespace Detail;

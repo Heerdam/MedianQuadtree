@@ -1148,9 +1148,9 @@ void idx_test() {
 int main() {
     //test_bucket_node();
     //bench_tree();
-    bench_tree2();
+    //bench_tree2();
     //morton_test();
-    //MQT2_tester();
+    MQT2_tester();
 
     //idx_test();
 
