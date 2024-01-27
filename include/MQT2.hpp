@@ -2,10 +2,8 @@
 
 #include <vector>
 #include <array>
-#include <variant>
 #include <memory>
 #include <queue>
-#include <iostream>
 #include <algorithm>
 #include <cassert>
 
@@ -22,8 +20,30 @@ namespace MQT2 {
 
         template<class T>
         [[nodiscard]] inline bool isZero(const T _v, const T _tol = 1.e-8) noexcept {
-            return isEqual<T>(_v, T(0.), _tol);
+            return isEqual<T>(_v, T(0), _tol);
         }//isZero
+
+        //----------------------------------
+
+        template<class T, class ALLOCATOR = std::allocator<T>>
+        [[nodiscard]] inline std::tuple<int32_t, int32_t, int32_t> naive_tester(
+        const std::vector<T, ALLOCATOR>& _map,
+        const Vec2& _min,
+        const Vec2& _max,
+        const int32_t _N,
+        const T _h
+        ) {
+            int32_t h = 0, m = 0, l = 0;
+            for (int32_t n0 = std::max(0, _min[0]); n0 < std::min(_N, _max[0]); ++n0) {
+                for (int32_t n1 = std::max(0, _min[1]); n1 < std::min(_N, _max[1]); ++n1) {
+                    const int32_t i = n1 + n0 * _N;
+                    if(isEqual(_map[i], _h)) m++;
+                    else if (_map[i] > _h) h++;
+                    else l++;
+                }
+            }
+            return { l, m, h };
+	    };//naive_tester
 
         //----------------------------------
 
