@@ -6,6 +6,9 @@
 #include <queue>
 #include <algorithm>
 #include <cassert>
+#include <type_traits>
+#include <variant>
+#include <iostream>
 
 namespace MQT2 {
 
@@ -13,15 +16,43 @@ namespace MQT2 {
 
     namespace Detail {
 
+        template<typename T>
+        struct var_type {
+            using type_ = std::conditional_t<std::is_integral_v<T>, float, T>;
+        };
+
+        template<typename T>
+        using var_type_t = var_type<T>::type_;
+
+        //----------------------------------
+
+        //template<typename T>
+        //struct idx {
+        //    static constexpr int32_t value_ = std::conditional_t<std::is_integral_v<T>, std::integral_constant<int32_t, 0>, std::integral_constant<int32_t, 1>>::value;
+        //};
+
+        //template<typename T>
+        //constexpr int32_t idx_v = idx<T>::value_;
+
+        //----------------------------------
+
         template<class T>
         [[nodiscard]] inline bool isEqual(const T _v1, const T _v2, const T _tol = 1.e-8) noexcept {
-            return std::abs( _v1 - _v2 ) <= _tol;
+            if constexpr (std::is_integral_v<T>)
+                return _v1 == _v2;
+            else return std::abs( _v1 - _v2 ) <= _tol;
         }//isEqual
 
         template<class T>
         [[nodiscard]] inline bool isZero(const T _v, const T _tol = 1.e-8) noexcept {
             return isEqual<T>(_v, T(0), _tol);
         }//isZero
+
+        // template<class T>
+        // requires std::negation_v<std::is_same<T, float>>
+        // [[nodiscard]] inline bool isEqual(const T _v1, const float _v2) noexcept {
+        //     return isEqual<float>(float(_v1), _v2, float(1.e-8));
+        // }//isEqual
 
         //----------------------------------
 
@@ -37,9 +68,10 @@ namespace MQT2 {
             for (int32_t n0 = std::max(0, _min[0]); n0 < std::min(_N, _max[0]); ++n0) {
                 for (int32_t n1 = std::max(0, _min[1]); n1 < std::min(_N, _max[1]); ++n1) {
                     const int32_t i = n1 + n0 * _N;
-                    if(isEqual(_map[i], _h)) m++;
-                    else if (_map[i] > _h) h++;
-                    else l++;
+                    const auto hh = _map[i];
+                    if(Detail::isEqual(hh, _h)) m++;
+                    else if(hh > _h) h++;
+                    else l++;  
                 }
             }
             return { l, m, h };
@@ -53,9 +85,10 @@ namespace MQT2 {
             //------------------
             Vec2 bmin_, bmax_;
             //------------------
-            T median_, max_, min_;
-            bool isFlat_;
             bool isMonoton_;
+            bool isFlat_;
+            //------------------
+            Detail::var_type_t<T> median_;
             //------------------
             std::array<T, SIZE * SIZE> vals_;
             //----------------
@@ -157,6 +190,8 @@ MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::MedianQuadTree(
 ) : map_(_map), N_(_n) 
 {
 
+    std::cout << typeid(Detail::var_type_t<T>).name() << std::endl;
+
     using namespace Detail;
 
     assert(_n%BUCKET_SIZE == 0);
@@ -169,16 +204,38 @@ MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::MedianQuadTree(
     n_.resize(dc);
     b_.resize(bc * bc);
 
+    int32_t k = 0;
+    for(int32_t j = 0; j < bc; j+=2){
+        for(int32_t i = 0; i < bc; i+=2){
 
-    for(int32_t j = 0; j < bc; ++j){
-        for(int32_t i = 0; i < bc; ++i){
-            const auto idx = i + j * bc;
-            b_[idx] = Bucket<T, SIZE, ALLOCATOR>( 
-                i + j * bc,
+            b_[k] = Bucket<T, SIZE, ALLOCATOR>( 
+                k,
                 max_level_,
                 Vec2{i * BUCKET_SIZE, j * BUCKET_SIZE},
                 Vec2{i * BUCKET_SIZE + BUCKET_SIZE, j * BUCKET_SIZE + BUCKET_SIZE}
             );
+            k++;
+            b_[k] = Bucket<T, SIZE, ALLOCATOR>( 
+                k,
+                max_level_,
+                Vec2{(i + 1) * BUCKET_SIZE, j * BUCKET_SIZE},
+                Vec2{(i + 1) * BUCKET_SIZE + BUCKET_SIZE, j * BUCKET_SIZE + BUCKET_SIZE}
+            );
+            k++;
+            b_[k] = Bucket<T, SIZE, ALLOCATOR>( 
+                k,
+                max_level_,
+                Vec2{i * BUCKET_SIZE, (j + 1) * BUCKET_SIZE},
+                Vec2{i * BUCKET_SIZE + BUCKET_SIZE, (j + 1) * BUCKET_SIZE + BUCKET_SIZE}
+            );
+            k++;
+            b_[k] = Bucket<T, SIZE, ALLOCATOR>( 
+                k,
+                max_level_,
+                Vec2{(i + 1) * BUCKET_SIZE, (j + 1) * BUCKET_SIZE},
+                Vec2{(i + 1) * BUCKET_SIZE + BUCKET_SIZE, (j + 1) * BUCKET_SIZE + BUCKET_SIZE}
+            );
+            k++;
         }
     }
     
@@ -210,9 +267,9 @@ void MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::impl_recompute(
     using namespace Detail;
 
     if(_level + 1 == max_level_){
-        constexpr T frac1 = T(1./3.);
-        constexpr T frac2 = T(4./3.);
-        const int32_t c1 = int32_t(4. * T(_idx) - 4. * std::pow(4., _level - 1) * frac1 + frac2);
+        constexpr double frac1 = T(1./3.);
+        constexpr double frac2 = T(4./3.);
+        const int32_t c1 = int32_t(4. * double(_idx) - 4. * std::pow(4., _level - 1) * frac1 + frac2);
         const int32_t c2 = c1 + 1;
         const int32_t c3 = c2 + 1;
         const int32_t c4 = c3 + 1;
@@ -222,8 +279,8 @@ void MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::impl_recompute(
         impl_recompute(b_[c3], _m);
         impl_recompute(b_[c4], _m);
 
-        _n.min_ = std::min(b_[c1].min_, std::min(b_[c2].min_, std::min(b_[c3].min_, b_[c4].min_)));
-        _n.max_ = std::max(b_[c1].max_, std::max(b_[c2].max_, std::max(b_[c3].max_, b_[c4].max_)));
+        _n.min_ = std::min(b_[c1].vals_.front(), std::min(b_[c2].vals_.front(), std::min(b_[c3].vals_.front(), b_[c4].vals_.front())));
+        _n.max_ = std::max(b_[c1].vals_.back(), std::max(b_[c2].vals_.back(), std::max(b_[c3].vals_.back(), b_[c4].vals_.back())));
         _n.isFlat_ = isEqual(_n.min_, _n.max_);
 
         _n.bmin_[0] = std::min(b_[c1].bmin_[0], std::min(b_[c2].bmin_[0], std::min(b_[c3].bmin_[0], b_[c4].bmin_[0])));
@@ -261,47 +318,48 @@ template<class T, int32_t SIZE, class ALLOCATOR>
 void MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::impl_recompute(Detail::Bucket<T, SIZE, ALLOCATOR>& _b, const std::vector<bool>& _m) {
     using namespace Detail;
 
-    if(!_m[_b.idx_]) return;
+    //if(!_m[_b.idx_]) return;
 
-    _b.max_ = -std::numeric_limits<T>::infinity();
-    _b.min_ = std::numeric_limits<T>::infinity();
+    //_b.max_ = -std::numeric_limits<T>::infinity();
+    //_b.min_ = std::numeric_limits<T>::infinity();
 
     int32_t k = 0;
     for (int32_t n0 = _b.bmin_[0]; n0 < _b.bmax_[0]; ++n0) {
         for (int32_t n1 = _b.bmin_[1]; n1 < _b.bmax_[1]; ++n1) {
             const int32_t i = n1 + n0 * N_;
-            _b.vals_[k++] = map_[i];
-            _b.max_ = std::max(_b.max_, map_[i]);
-            _b.min_ = std::min(_b.min_, map_[i]);
+            _b.vals_[k] = map_[i];
+            k++;
+            //_b.max_ = std::max(_b.max_, map_[i]);
+           // _b.min_ = std::min(_b.min_, map_[i]);
         }
     }
 
-    std::sort(_b.vals_.begin(), _b.vals_.end(), [](const auto& _e1, const auto& _e2) {
+    std::sort(_b.vals_.begin(), _b.vals_.end(), [](const auto _e1, const auto _e2) {
         return _e1 < _e2;
     });
 
-    _b.isFlat_ = isEqual(_b.min_, _b.max_);
+    _b.isFlat_ = isEqual<T>(_b.vals_.front(), _b.vals_.back());
     if(_b.isFlat_){
-        _b.median_ = _b.max_;
+        //std::cout << _b.idx_ << ", " << _b.vals_.front() << ", " << _b.vals_.back() << std::endl;
+        _b.median_ = Detail::var_type_t<T>(_b.vals_.back());
         return;
     }
     
-    if constexpr ((BUCKET_SIZE * BUCKET_SIZE) % 2 == 0) {
+    if constexpr ((BUCKET_SIZE * BUCKET_SIZE) % 2 == 1) {
         constexpr int32_t idx = int32_t((BUCKET_SIZE * BUCKET_SIZE) + 1) / 2;
 
-        _b.median_ = _b.vals_[idx];
-
-        _b.isMonoton_ = BUCKET_SIZE >= 3 && !isEqual(_b.vals_[idx - 1], _b.median_) && 
-            !isEqual(_b.vals_[idx + 1], _b.median_);
+        _b.median_ = Detail::var_type_t<T>(_b.vals_[idx]);
+        _b.isMonoton_ = BUCKET_SIZE >= 3 && !isEqual<T>(Detail::var_type_t<T>(_b.vals_[idx - 1]), _b.median_) && 
+            !isEqual<T>(Detail::var_type_t<T>(_b.vals_[idx + 1]), _b.median_);
 
     } else {
         constexpr int32_t idx1 = int32_t((BUCKET_SIZE * BUCKET_SIZE) / 2);
         constexpr int32_t idx2 = idx1 + 1;
 
-        _b.median_ = (_b.vals_[idx1] + _b.vals_[idx2]) * T(0.5);
+        _b.median_ = Detail::var_type_t<T>(_b.vals_[idx1] + _b.vals_[idx2]) * Detail::var_type_t<T>(0.5);
 
-        _b.isMonoton_ = BUCKET_SIZE >= 3 && !isEqual(_b.vals_[idx1], _b.median_) && 
-            !isEqual(_b.vals_[idx2], _b.median_);
+        _b.isMonoton_ = BUCKET_SIZE >= 3 && !isEqual<T>(Detail::var_type_t<T>(_b.vals_[idx1]), _b.median_) && 
+            !isEqual<T>(Detail::var_type_t<T>(_b.vals_[idx2]), _b.median_);
 
     }
 
@@ -350,9 +408,9 @@ std::tuple<int32_t, int32_t, int32_t> MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::
     //----------------------------
 
     if(_level + 1 == max_level_){
-        constexpr T frac1 = T(1./3.);
-        constexpr T frac2 = T(4./3.);
-        const int32_t c1 = int32_t(4. * T(_idx) - 4. * std::pow(4., _level - 1) * frac1 + frac2);
+        constexpr double frac1 = T(1./3.);
+        constexpr double frac2 = T(4./3.);
+        const int32_t c1 = int32_t(4. * double(_idx) - 4. * std::pow(4., _level - 1) * frac1 + frac2);
         const int32_t c2 = c1 + 1;
         const int32_t c3 = c2 + 1;
         const int32_t c4 = c3 + 1;
@@ -394,12 +452,20 @@ std::tuple<int32_t, int32_t, int32_t> MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::
     const int32_t max0 = std::min(_max[0], _b.bmax_[0]);
     const int32_t max1 = std::min(_max[1], _b.bmax_[1]);
 
-    const bool isPartial = !(min0 ==  _b.bmin_[0] && min1 ==  _b.bmin_[1] && max0 ==  _b.bmax_[0] && max1 ==  _b.bmax_[1]);
+    const bool isPartial = !(min0 == _b.bmin_[0] && min1 == _b.bmin_[1] && max0 == _b.bmax_[0] && max1 == _b.bmax_[1]);
 
     if ( _b.isFlat_ && !isPartial) {
-        if(isEqual<T>(_h,  _b.median_)) return { 0, ( _b.bmax_[0] -  _b.bmin_[0]) * ( _b.bmax_[1] -  _b.bmin_[1]), 0 };
-        else if (_h >=  _b.median_) return { ( _b.bmax_[0] -  _b.bmin_[0]) * ( _b.bmax_[1] -  _b.bmin_[1]), 0, 0 };
-        else return { 0, 0, ( _b.bmax_[0] -  _b.bmin_[0]) * ( _b.bmax_[1] -  _b.bmin_[1]) };
+        //std::cout << "flat: ";
+        if(Detail::isEqual<T>(_h, _b.vals_.front())){
+            //std::cout << 0 << ", " << ( _b.bmax_[0] -  _b.bmin_[0]) * ( _b.bmax_[1] -  _b.bmin_[1]) << ", " << 0 << std::endl;
+            return { 0, ( _b.bmax_[0] -  _b.bmin_[0]) * ( _b.bmax_[1] -  _b.bmin_[1]), 0 };
+        } else if (_h > _b.vals_.front()){
+            //std::cout << ( _b.bmax_[0] -  _b.bmin_[0]) * ( _b.bmax_[1] -  _b.bmin_[1]) << ", " << 0 << ", " << 0 << std::endl;
+            return { ( _b.bmax_[0] -  _b.bmin_[0]) * ( _b.bmax_[1] -  _b.bmin_[1]), 0, 0 };
+        } else {
+            //std::cout << 0 << ", " << 0 << ", " << ( _b.bmax_[0] -  _b.bmin_[0]) * ( _b.bmax_[1] -  _b.bmin_[1]) << std::endl;
+            return { 0, 0, ( _b.bmax_[0] -  _b.bmin_[0]) * ( _b.bmax_[1] -  _b.bmin_[1]) };
+        }
     }
 
     //--------------------
@@ -411,65 +477,104 @@ std::tuple<int32_t, int32_t, int32_t> MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::
         for (int32_t n0 = min0; n0 < max0; ++n0) {
             for (int32_t n1 = min1; n1 < max1; ++n1) {
                 const int32_t i = n1 + n0 * N_;
-                if(map_[i] < _h) l++;
-                else if (map_[i] > _h) h++;
-                else m++;
+                const auto hh = map_[i];
+                //std::cout << hh << std::endl;
+                if(Detail::isEqual<T>(hh, _h)) m++;
+                else if(hh > _h) h++;
+                else l++;    
             }
         }
+        //std::cout << "partial: " << l << ", " << m << ", " << h << std::endl;
+        // std::cout << _b.idx_ << std::endl;
+        // for(int32_t n0 = 0; n0 < 40; ++n0){
+        //     for(int32_t n1 = 0; n1 < 40; ++n1){
+        //         const int32_t i = n1 + n0 * 40;
+        //         if(n0 >= _b.bmin_[0] && n0 < _b.bmax_[0] && n1 >= _b.bmin_[1] && n1 < _b.bmax_[1]){
+        //             const int32_t i = n1 + n0 * 40;
+        //             const auto hh = map_[i];
+        //             if(Detail::isEqual<T>(hh, _h)) std::cout << 'm' << ' ';
+        //             else if(hh > _h) std::cout << 'h' << ' ';
+        //             else std::cout << 'l' << ' ';   
+        //         }else
+        //             std::cout << '0' << ' ';
+        //     }
+        //     std::cout << std::endl;
+        // }
+        // std::cout << std::endl;
         return { l, m, h };
     }
 
     if(!_b.isMonoton_){
         int32_t l = 0, m = 0, h = 0;
-        for(const auto& hh : _b.vals_){
-            if(hh > _h) h++;
-            else if (hh < _h) l++;
-            else m++;
+        for(int32_t i = 0; i < BUCKET_SIZE * BUCKET_SIZE; ++i){
+            const auto hh = _b.vals_[i];
+            if(Detail::isEqual<T>(hh, _h)) m++;
+            else if(hh > _h) h++;
+            else l++;  
         }
+        //std::cout << "monoton: " << l << ", " << m << ", " << h << std::endl;
         return { l, m, h };
     }
 
-    if constexpr((BUCKET_SIZE * BUCKET_SIZE) % 2 == 0){
-        constexpr int32_t idx = int32_t((BUCKET_SIZE * BUCKET_SIZE) + 1) / 2;
+    if constexpr (false){
+        int32_t l2 = 0, m2 = 0, h2 = 0;
+        for (int32_t n0 = min0; n0 < max0; ++n0) {
+            for (int32_t n1 = min1; n1 < max1; ++n1) {
+                const int32_t i = n1 + n0 * N_;
+                const auto hh = map_[i];
+                if(Detail::isEqual<T>(hh, _h)) m2++;
+                else if(hh > _h) h2++;
+                else l2++;    
+            }
+        }
+        return {l2, m2, h2};
+        //std::cout << "----- " << _b.idx_ << "----- " << std::endl;
+        //std::cout << "exp: " << l2 << ", " << m2 << ", " << h2 << " (" << l2 + m2 + h2 << ")" << std::endl;
+   }
 
-        if (_h > _b.median_) {
+    if constexpr((BUCKET_SIZE * BUCKET_SIZE) % 2 == 1){
+        constexpr int32_t idx = int32_t((BUCKET_SIZE * BUCKET_SIZE) + 1) / 2;
+        
+        if (Detail::var_type_t<T>(_h) > _b.median_) {
             int32_t l = idx, m = 0, h = 0;
             for(int32_t i = idx; i < BUCKET_SIZE * BUCKET_SIZE; ++i){
-                const auto& hh = _b.vals_[i];
-                if(hh > _h) h++;
-                else if (hh < _h) l++;
-                else m++;
+                const auto hh = _b.vals_[i];
+                if(Detail::isEqual<T>(hh, _h)) m++;
+                else if(hh > _h) h++;
+                else l++;  
             }
+            //std::cout << "> median: " << l << ", " << m << ", " << h << std::endl;
             return { l, m, h };
         } else {
             int32_t l = 0, m = 0, h = idx;
             for(int32_t i = 0; i < idx + 1; ++i){
-                const auto& hh = _b.vals_[i];
-                if(hh > _h) h++;
-                else if (hh < _h) l++;
-                else m++;
+                const auto hh = _b.vals_[i];
+                if(Detail::isEqual<T>(hh, _h)) m++;
+                else if(hh > _h) h++;
+                else l++;  
             }
+            //std::cout << "< median: " << l << ", " << m << ", " << h << std::endl;
             return { l, m, h };
         }
 
     } else {
         constexpr int32_t idx = int32_t((BUCKET_SIZE * BUCKET_SIZE) / 2);
-        if (_h > _b.median_) {
+        if (Detail::var_type_t<T>(_h) > _b.median_) {
             int32_t l = idx, m = 0, h = 0;
             for(int32_t i = idx; i < BUCKET_SIZE * BUCKET_SIZE; ++i){
-                const auto& hh = _b.vals_[i];
-                if(hh > _h) h++;
-                else if (hh < _h) l++;
-                else m++;
+                const auto hh = _b.vals_[i];
+                if(Detail::isEqual<T>(hh, _h)) m++;
+                else if(hh > _h) h++;
+                else l++;  
             }
             return { l, m, h };
         } else {
             int32_t l = 0, m = 0, h = idx;
-            for(int32_t i = 0; i < idx + 1; ++i){
-                const auto& hh = _b.vals_[i];
-                if(hh > _h) h++;
-                else if (hh < _h) l++;
-                else m++;
+            for(int32_t i = 0; i < idx; ++i){
+                const auto hh = _b.vals_[i];
+                if(Detail::isEqual<T>(hh, _h)) m++;
+                else if(hh > _h) h++;
+                else l++;  
             }
             return { l, m, h };
         }
