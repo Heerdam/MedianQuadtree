@@ -6,7 +6,7 @@
 
 #include <MQT2.hpp>
 
-void MQT2_tester() {
+void MQT2_tester_float() {
 
     using namespace MQT2;
 
@@ -32,7 +32,7 @@ void MQT2_tester() {
     {
         MedianQuadTree<double, 10> tree(map, 40);
         //std::cout << tree << std::endl;
-        std::cout << "----- Tree single box -----" << std::endl;
+        std::cout << "----- Tree single box (double) -----" << std::endl;
 
         //full overlap
         if constexpr(true){
@@ -128,7 +128,7 @@ void MQT2_tester() {
     {
         MedianQuadTree<double, 10> tree(map, 40);
         //std::cout << tree << std::endl;
-        std::cout << "----- Tree checker -----" << std::endl;
+        std::cout << "----- Tree checker (double) -----" << std::endl;
 
         //full overlap
         if constexpr(true){
@@ -210,7 +210,7 @@ void MQT2_tester() {
 
         MedianQuadTree<double, 10>tree1(map, size);
 
-        std::cout << "Tree size 10" << std::endl;
+        std::cout << "Tree size 10 (double)" << std::endl;
 
         using Dist = ::std::uniform_int_distribution<>;
         using Rand = std::mt19937_64;
@@ -232,11 +232,425 @@ void MQT2_tester() {
         for(int32_t k = 0; k < 100; ++k){
 
             {
+                const int32_t width = Dist(2, size/4)(rnd) - 1;
+                const int32_t height = Dist(2, size/4)(rnd) - 1;
+                const int32_t xmin = Dist(0, size - width)(rnd);
+                const int32_t ymin = Dist(0, size - height)(rnd);
+                const double h = std::round(DistD(10., 200.)(rnd));
+
+                for(int32_t n0 = ymin; n0 <= ymin + height; ++n0){
+                    for(int32_t n1 = xmin; n1 <= xmin + width; ++n1){
+                        const int32_t i = n1 + n0 * size;
+                        if(i < 0 || i >= map.size()){
+
+                            continue;
+                        }
+                        map[i] = k;
+                    }
+                }
+
+                std::fill(mm.begin(), mm.end(), false);
+                for (int32_t n1 = xmin / 15; n1 <= std::min((xmin + width) / 15 + 1, bc - 1); ++n1) {
+                    for (int32_t n0 = ymin / 15; n0 <= std::min((ymin + height) / 15 + 1, bc - 1); ++n0) {         
+                        const int32_t iid = n0 + n1 * bc;
+                        mm[iid] = true;
+                    }
+                }
+
+            }
+
+            
+            //std::cout << "-----" << std::endl;
+            if(k == 19){
+                std::cout << "ding" << std::endl;
+            }
+            tree1.recompute(mm);
+
+            {
+
+                const int32_t width = Dist(size/4, size/2 - 2)(rnd) - 1;
+                const int32_t height = Dist(size/4, size/2 - 2)(rnd) - 1;
+                const int32_t n0 = Dist(width + 1, size - width - 1)(rnd);
+                const int32_t n1 = Dist(height + 1, size - height - 1)(rnd);
+                const double h = std::round(DistD(10., 200.)(rnd));
+                
+                const auto[l1, m1, h1] = tree1.check_overlap(Vec2{n0 - width, n1 - height}, Vec2{n0 + width, n1 + height}, h);
+                const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double>(map, Vec2{n0 - width, n1 - height}, Vec2{n0 + width, n1 + height}, size, h);
+
+                if(l1 == l2 && m1 == m2 && h1 == h2) suc++;
+                else{
+                    // std::cout << std::endl;
+                    // for(int32_t nn0 = 0; nn0 < 40; ++nn0){
+                    //     for(int32_t nn1 = 0; nn1 < 40; ++nn1){
+                    //         const int32_t i = nn1 + nn0 * 40;
+                    //         if(map[i] > h)
+                    //             std::cout << 'x' << ' ';
+                    //         else
+                    //             std::cout << '0' << ' ';
+                    //     }
+                    //     std::cout << std::endl;
+                    // }
+                    // std::cout << std::endl;
+                    // for(int32_t nn0 = 0; nn0 < 40; ++nn0){
+                    //     for(int32_t nn1 = 0; nn1 < 40; ++nn1){
+                    //         const int32_t i = nn1 + nn0 * 40;
+                    //         if(nn0 >= (n0 - width) && nn0 < (n0 + width) && nn1 >= (n1 - height) && nn1 < (n1 + height))
+                    //             std::cout << 'x' << ' ';
+                    //         else
+                    //             std::cout << '0' << ' ';
+                    //     }
+                    //     std::cout << std::endl;
+                    // }
+
+                    std::cout << "----" << std::endl;
+                    std::cout << k << std::endl;
+                    std::cout << n0 - width << ", " << n1 - height << std::endl;
+                    std::cout << n0 + width << ", " << n1 + height << std::endl;
+                    std::cout << width << ", " << height << std::endl;
+                    std::cout << h << std::endl;
+                    std::cout << l1 << ", " << m1 << ", " << h1 << "(" << l1 + m1 + h1 << ")" << std::endl;
+                    std::cout << l2 << ", " << m2 << ", " << h2 << "(" << l2 + m2 + h2 << ")" << std::endl;
+                    std::cout << "----" << std::endl;
+                    fail++;
+                    tree1.print_debug();
+                    return;
+                } 
+            }
+
+            std::cout << "\r" << k;
+
+        }
+
+        std::cout << "\rSuccess: " << suc << std::endl;
+        std::cout << "Fail: " << fail << std::endl;
+
+    }
+
+    {
+        map.resize(6400*6400);
+        std::fill(map.begin(), map.end(), 0.);
+
+        MedianQuadTree<double, 25>tree1(map, 6400);
+
+        std::cout << "Tree size 25 (double)" << std::endl;
+
+        using Dist = ::std::uniform_int_distribution<>;
+        using Rand = std::mt19937_64;
+        using DistD = ::std::uniform_real_distribution<double>;
+
+        std::random_device rd;
+        const auto seed = rd();
+        std::cout << seed << std::endl;
+        std::mt19937_64 rnd(seed);
+
+        int32_t suc = 0;
+        int32_t fail = 0;
+
+        const int32_t bc = 6400 / 25;
+        std::vector<bool> mm;
+        mm.resize(bc * bc);
+        std::fill(mm.begin(), mm.end(), true);
+
+        for(int32_t k = 0; k < 100; ++k){
+
+            {
+                const int32_t width = Dist(10, 500)(rnd) - 1;
+                const int32_t height = Dist(10, 500)(rnd) - 1;
+                const int32_t xmin = Dist(0, 6400 - width)(rnd);
+                const int32_t ymin = Dist(0, 6400 - height)(rnd);
+                const int32_t h = std::round(Dist(10., 200.)(rnd));
+
+                for(int32_t n0 = ymin; n0 <= ymin + height; ++n0){
+                    for(int32_t n1 = xmin; n1 <= xmin + width; ++n1){
+                        const int32_t i = n1 + n0 * 6400;
+                        map[i] = k;
+                    }
+                }
+
+                // std::fill(mm.begin(), mm.end(), false);
+                // for (int32_t n1 = xmin / 25; n1 <= std::min((xmin + width) / 25 + 1, bc - 1); ++n1) {
+                //     for (int32_t n0 = ymin / 25; n0 <= std::min((ymin + height) / 25 + 1, bc - 1); ++n0) {         
+                //         const int32_t iid = n0 + n1 * bc;
+                //         mm[iid] = true;
+                //     }
+                // }
+
+                tree1.recompute(mm);
+            }
+
+            //----------------
+
+            
+            for(int32_t j = 0; j < 100; ++j){
+
+                const int32_t width = Dist(250, 1250)(rnd) - 1;
+                const int32_t height = Dist(250, 1250)(rnd) - 1;
+                const int32_t n0 = Dist(width + 1, 6400 - width - 1)(rnd);
+                const int32_t n1 = Dist(height + 1, 6400 - height - 1)(rnd);
+                const int32_t h = std::round(Dist(10., 200.)(rnd));
+
+                const auto[l1, m1, h1] = tree1.check_overlap(Vec2{n0 - width, n1 - height}, Vec2{n0 + width, n1 + height}, h);
+                const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double>(map, Vec2{n0 - width, n1 - height}, Vec2{n0 + width, n1 + height}, 6400, h);
+
+                if(l1 == l2 && m1 == m2 && h1 == h2) suc++;
+                else{
+                    std::cout << "----" << std::endl;
+                    std::cout << n0 - width << ", " << n1 - height << std::endl;
+                    std::cout << n0 + width << ", " << n1 + height << std::endl;
+                    std::cout << width << ", " << height << std::endl;
+                    std::cout << h << std::endl;
+                    std::cout << l1 << ", " << m1 << ", " << h1 << "(" << l1 + m1 + h1 << ")" << std::endl;
+                    std::cout << l2 << ", " << m2 << ", " << h2 << "(" << l2 + m2 + h2 << ")" << std::endl;
+                    std::cout << "----" << std::endl;
+                    fail++;
+                } 
+            }
+
+            std::cout << "\r" << k;
+
+        }
+
+        std::cout << "\rSuccess: " << suc << std::endl;
+        std::cout << "Fail: " << fail << std::endl;
+
+    }
+    
+}//MQT2_tester_float
+
+void MQT2_tester_int() {
+
+    using namespace MQT2;
+
+    std::vector<int32_t> map;
+    map.resize(40*40);
+    std::fill(map.begin(), map.end(), 0.);   
+    for(int32_t n0 = 23; n0 <= 31; ++n0){
+        for(int32_t n1 = 20; n1 <= 25; ++n1){
+            const int32_t i = n1 + n0 * 40;
+            map[i] = 2;
+        }
+    }
+
+    // for(int32_t n0 = 0; n0 < 40; ++n0){
+    //     for(int32_t n1 = 0; n1 < 40; ++n1){
+    //         const int32_t i = n1 + n0 * 40;
+    //         std::cout << (map[i] > 1. ? 'x' : '0' ) << ' ';
+    //     }
+    //     std::cout << std::endl;
+    // }
+    // std::cout << std::endl;
+
+    {
+        MedianQuadTree<int32_t, 10> tree(map, 40);
+        //tree.print_debug();
+        //return;
+
+        //std::cout << tree << std::endl;
+        std::cout << "----- Tree single box (int)-----" << std::endl;
+
+        //full overlap
+        if constexpr(true){
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2{0, 0}, Vec2{40, 40}, 1);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<int32_t>(map, Vec2{0, 0}, Vec2{40, 40}, 40, 1);
+            std::cout << "Test 1: ";
+            std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
+            std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
+            std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
+        }
+
+        //mid
+        if constexpr(true){
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2{5, 5}, Vec2{35, 35}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<int32_t>(map, Vec2{5, 5}, Vec2{35, 35}, 40, 1);
+            std::cout << "Test 2: ";
+            std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
+            std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
+            std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
+
+            // for(int32_t n0 = 0; n0 < 40; ++n0){
+            //     for(int32_t n1 = 0; n1 < 40; ++n1){
+            //         const int32_t i = n1 + n0 * 40;
+            //         if(n0 >= 5 && n0 < 35 && n1 >= 5 && n1 < 35)
+            //             std::cout << 'x' << ' ';
+            //         else
+            //             std::cout << '0' << ' ';
+            //     }
+            //     std::cout << std::endl;
+            // }
+        }
+
+        //return;
+
+        //partial
+        if constexpr(true){
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2{0, 0}, Vec2{10, 10}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<int32_t>(map, Vec2{0, 0}, Vec2{10, 10}, 40, 1);
+            std::cout << "Test 3: ";
+            std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
+            std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
+            std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
+        }
+        if constexpr(true){
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2{10, 0}, Vec2{25, 10}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<int32_t>(map, Vec2{10, 0}, Vec2{25, 10}, 40, 1);
+            std::cout << "Test 4: ";
+            std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
+            std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
+            std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
+        }
+        if constexpr(true){
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2{0, 10}, Vec2{10, 25}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<int32_t>(map, Vec2{0, 10}, Vec2{10, 25}, 40, 1);
+            std::cout << "Test 5: ";
+            std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
+            std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
+            std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;        
+        }
+        if constexpr(true){
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2{10, 10}, Vec2{25, 25}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<int32_t>(map, Vec2{10, 10}, Vec2{25, 25}, 40, 1);
+            std::cout << "Test 6: ";
+            std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
+            std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
+            std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
+        }
+        if constexpr(true){
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2{0, 0}, Vec2{10, 25}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<int32_t>(map, Vec2{0, 0}, Vec2{10, 25}, 40, 1);
+            std::cout << "Test 7: ";
+            std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
+            std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
+            std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
+        }
+        if constexpr(true){
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2{0, 5}, Vec2{12, 17}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<int32_t>(map, Vec2{0, 5}, Vec2{12, 17}, 40, 1);
+            std::cout << "Test 8: ";
+            std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
+            std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
+            std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
+        }
+    }
+
+    for(int32_t n1 = 0; n1 < 40; ++n1){
+        for(int32_t n0 = 0; n0 < 40; ++n0){
+            const int32_t i = n1 + n0 * 40;
+            if(i%2) map[i] = 2.;
+        }
+    }
+
+    {
+        MedianQuadTree<int32_t, 10> tree(map, 40);
+        //std::cout << tree << std::endl;
+        std::cout << "----- Tree checker (int) -----" << std::endl;
+
+        //full overlap
+        if constexpr(true){
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2{0, 0}, Vec2{20, 20}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<int32_t>(map, Vec2{0, 0}, Vec2{20, 20}, 40, 1);
+            std::cout << "Test 1: ";
+            std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
+            std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
+            std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
+        }
+
+        //mid
+        if constexpr(true){
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2{5, 5}, Vec2{15, 15}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<int32_t>(map, Vec2{5, 5}, Vec2{15, 15}, 40, 1);
+            std::cout << "Test 2: ";
+            std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
+            std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
+            std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
+        }
+
+        //partial
+        if constexpr(true){
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2{0, 0}, Vec2{10, 10}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<int32_t>(map, Vec2{0, 0}, Vec2{10, 10}, 40, 1);
+            std::cout << "Test 3: ";
+            std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
+            std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
+            std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
+        }
+        if constexpr(true){
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2{10, 0}, Vec2{25, 10}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<int32_t>(map, Vec2{10, 0}, Vec2{25, 10}, 40, 1);
+            std::cout << "Test 4: ";
+            std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
+            std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
+            std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
+        }
+        if constexpr(true){
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2{0, 10}, Vec2{10, 25}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<int32_t>(map, Vec2{-5, 10}, Vec2{10, 25}, 40, 1);
+            std::cout << "Test 5: ";
+            std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
+            std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
+            std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
+        }
+        if constexpr(true){
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2{10, 10}, Vec2{25, 25}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<int32_t>(map, Vec2{10, 10}, Vec2{25, 25}, 40, 1);
+            std::cout << "Test 6: ";
+            std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
+            std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
+            std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
+        }
+        if constexpr(true){
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2{0, 0}, Vec2{10, 25}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<int32_t>(map, Vec2{0, 0}, Vec2{10, 25}, 40, 1);
+            std::cout << "Test 7: ";
+            std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
+            std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
+            std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
+        }
+        if constexpr(true){
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2{0, 5}, Vec2{12, 17}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<int32_t>(map, Vec2{0, 5}, Vec2{12, 17}, 40, 1);
+            std::cout << "Test 8: ";
+            std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
+            std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
+            std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
+        }
+    }
+
+    //-------------------------------
+
+    {
+        constexpr int32_t size = 10*2*2;
+        map.resize(size*size);
+        std::fill(map.begin(), map.end(), 0);
+
+        MedianQuadTree<int32_t, 10>tree1(map, size);
+
+        std::cout << "Tree size 10 (int)" << std::endl;
+
+        using Dist = ::std::uniform_int_distribution<>;
+        using Rand = std::mt19937_64;
+        //using DistD = ::std::uniform_real_distribution<double>;
+
+        std::random_device rd;
+        const auto seed = 2937685668; // rd();
+        std::cout << seed << std::endl;
+        std::mt19937_64 rnd(seed);
+
+        int32_t suc = 0;
+        int32_t fail = 0;
+
+        const int32_t bc = size / 15;
+        std::vector<bool> mm;
+        mm.resize(bc * bc);
+        std::fill(mm.begin(), mm.end(), true);
+
+        for(int32_t k = 0; k < 100; ++k){
+
+            {
                 const int32_t width = Dist(2, size/4)(rnd);
                 const int32_t height = Dist(2, size/4)(rnd);
                 const int32_t xmin = Dist(0, size - width)(rnd);
                 const int32_t ymin = Dist(0, size - height)(rnd);
-                const double h = std::round(DistD(10., 200.)(rnd));
+                const double h = std::round(Dist(10, 200)(rnd));
 
                 for(int32_t n0 = ymin; n0 <= ymin + height; ++n0){
                     for(int32_t n1 = xmin; n1 <= xmin + width; ++n1){
@@ -265,10 +679,10 @@ void MQT2_tester() {
                 const int32_t height = Dist(size/4, size/2 - 2)(rnd);
                 const int32_t n0 = Dist(width + 1, size - width - 1)(rnd);
                 const int32_t n1 = Dist(height + 1, size - height - 1)(rnd);
-                const double h = std::round(DistD(10., 200.)(rnd));
+                const double h = std::round(Dist(10., 200.)(rnd));
                 //if(k != 34) continue;
                 const auto[l1, m1, h1] = tree1.check_overlap(Vec2{n0 - width, n1 - height}, Vec2{n0 + width, n1 + height}, h);
-                const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double>(map, Vec2{n0 - width, n1 - height}, Vec2{n0 + width, n1 + height}, size, h);
+                const auto[l2, m2, h2] = MQT2::Detail::naive_tester<int32_t>(map, Vec2{n0 - width, n1 - height}, Vec2{n0 + width, n1 + height}, size, h);
 
                 if(l1 == l2 && m1 == m2 && h1 == h2) suc++;
                 else{
@@ -319,13 +733,12 @@ void MQT2_tester() {
     }
 
     {
-        std::vector<int32_t> map1;
-        map1.resize(6400*6400);
-        std::fill(map1.begin(), map1.end(), 0);
+        map.resize(6400*6400);
+        std::fill(map.begin(), map.end(), 0);
 
-        MedianQuadTree<int32_t, 25>tree1(map1, 6400);
+        MedianQuadTree<int32_t, 25>tree1(map, 6400);
 
-        std::cout << "Tree size 25" << std::endl;
+        std::cout << "Tree size 25 (int)" << std::endl;
 
         using Dist = ::std::uniform_int_distribution<>;
         using Rand = std::mt19937_64;
@@ -356,7 +769,7 @@ void MQT2_tester() {
                 for(int32_t n0 = ymin; n0 <= ymin + height; ++n0){
                     for(int32_t n1 = xmin; n1 <= xmin + width; ++n1){
                         const int32_t i = n1 + n0 * 6400;
-                        map1[i] = k;
+                        map[i] = k;
                     }
                 }
 
@@ -383,7 +796,7 @@ void MQT2_tester() {
                 const int32_t h = std::round(Dist(10., 200.)(rnd));
 
                 const auto[l1, m1, h1] = tree1.check_overlap(Vec2{n0 - width, n1 - height}, Vec2{n0 + width, n1 + height}, h);
-                const auto[l2, m2, h2] = MQT2::Detail::naive_tester<int32_t>(map1, Vec2{n0 - width, n1 - height}, Vec2{n0 + width, n1 + height}, 6400, h);
+                const auto[l2, m2, h2] = MQT2::Detail::naive_tester<int32_t>(map, Vec2{n0 - width, n1 - height}, Vec2{n0 + width, n1 + height}, 6400, h);
 
                 if(l1 == l2 && m1 == m2 && h1 == h2) suc++;
                 else{
@@ -408,7 +821,7 @@ void MQT2_tester() {
 
     }
     
-}
+}//MQT2_tester_int
 
 void bench_tree2() {
     using namespace MQT2;
@@ -418,7 +831,7 @@ void bench_tree2() {
     std::cout << seed << std::endl;
     std::mt19937_64 rand(seed);
 
-    using SCALAR = float;
+    using SCALAR = uint8_t;
 
     std::vector<SCALAR> map;
     // map.resize(1000 * 1000);
@@ -611,9 +1024,10 @@ void depth_test() {
 int main() {
     //test_bucket_node();
     //bench_tree();
-    //bench_tree2();
+    bench_tree2();
     //morton_test();
-    MQT2_tester();
+    //MQT2_tester_float();
+    //MQT2_tester_int();
 
     //idx_test();
 
