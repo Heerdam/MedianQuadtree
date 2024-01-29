@@ -234,24 +234,21 @@ void MQT2_tester_float() {
             {
                 const int32_t width = Dist(2, size/4)(rnd) - 1;
                 const int32_t height = Dist(2, size/4)(rnd) - 1;
-                const int32_t xmin = Dist(0, size - width)(rnd);
-                const int32_t ymin = Dist(0, size - height)(rnd);
+                const int32_t xmin = Dist(0, size - width - 1)(rnd);
+                const int32_t ymin = Dist(0, size - height - 1)(rnd);
                 const double h = std::round(DistD(10., 200.)(rnd));
 
                 for(int32_t n0 = ymin; n0 <= ymin + height; ++n0){
                     for(int32_t n1 = xmin; n1 <= xmin + width; ++n1){
                         const int32_t i = n1 + n0 * size;
-                        if(i < 0 || i >= map.size()){
-
-                            continue;
-                        }
+                        assert(i >= 0 && i < map.size());
                         map[i] = k;
                     }
                 }
 
                 std::fill(mm.begin(), mm.end(), false);
-                for (int32_t n1 = xmin / 15; n1 <= std::min((xmin + width) / 15 + 1, bc - 1); ++n1) {
-                    for (int32_t n0 = ymin / 15; n0 <= std::min((ymin + height) / 15 + 1, bc - 1); ++n0) {         
+                for (int32_t n1 = xmin / 10; n1 <= std::min((xmin + width) / 10 + 1, bc - 1); ++n1) {
+                    for (int32_t n0 = ymin / 10; n0 <= std::min((ymin + height) / 10 + 1, bc - 1); ++n0) {         
                         const int32_t iid = n0 + n1 * bc;
                         mm[iid] = true;
                     }
@@ -259,11 +256,6 @@ void MQT2_tester_float() {
 
             }
 
-            
-            //std::cout << "-----" << std::endl;
-            if(k == 19){
-                std::cout << "ding" << std::endl;
-            }
             tree1.recompute(mm);
 
             {
@@ -312,7 +304,7 @@ void MQT2_tester_float() {
                     std::cout << l2 << ", " << m2 << ", " << h2 << "(" << l2 + m2 + h2 << ")" << std::endl;
                     std::cout << "----" << std::endl;
                     fail++;
-                    tree1.print_debug();
+                    //tree1.print_debug();
                     return;
                 } 
             }
@@ -356,24 +348,25 @@ void MQT2_tester_float() {
             {
                 const int32_t width = Dist(10, 500)(rnd) - 1;
                 const int32_t height = Dist(10, 500)(rnd) - 1;
-                const int32_t xmin = Dist(0, 6400 - width)(rnd);
-                const int32_t ymin = Dist(0, 6400 - height)(rnd);
+                const int32_t xmin = Dist(0, 6400 - width - 1)(rnd);
+                const int32_t ymin = Dist(0, 6400 - height - 1)(rnd);
                 const int32_t h = std::round(Dist(10., 200.)(rnd));
 
                 for(int32_t n0 = ymin; n0 <= ymin + height; ++n0){
                     for(int32_t n1 = xmin; n1 <= xmin + width; ++n1){
                         const int32_t i = n1 + n0 * 6400;
+                        assert(i >= 0 && i < map.size());
                         map[i] = k;
                     }
                 }
 
-                // std::fill(mm.begin(), mm.end(), false);
-                // for (int32_t n1 = xmin / 25; n1 <= std::min((xmin + width) / 25 + 1, bc - 1); ++n1) {
-                //     for (int32_t n0 = ymin / 25; n0 <= std::min((ymin + height) / 25 + 1, bc - 1); ++n0) {         
-                //         const int32_t iid = n0 + n1 * bc;
-                //         mm[iid] = true;
-                //     }
-                // }
+                std::fill(mm.begin(), mm.end(), false);
+                for (int32_t n1 = xmin / 25; n1 <= std::min((xmin + width) / 25 + 1, bc - 1); ++n1) {
+                    for (int32_t n0 = ymin / 25; n0 <= std::min((ymin + height) / 25 + 1, bc - 1); ++n0) {         
+                        const int32_t iid = n0 + n1 * bc;
+                        mm[iid] = true;
+                    }
+                }
 
                 tree1.recompute(mm);
             }
@@ -427,6 +420,7 @@ void MQT2_tester_int() {
     for(int32_t n0 = 23; n0 <= 31; ++n0){
         for(int32_t n1 = 20; n1 <= 25; ++n1){
             const int32_t i = n1 + n0 * 40;
+            assert(i >= 0 && i < map.size());
             map[i] = 2;
         }
     }
@@ -535,6 +529,7 @@ void MQT2_tester_int() {
     for(int32_t n1 = 0; n1 < 40; ++n1){
         for(int32_t n0 = 0; n0 < 40; ++n0){
             const int32_t i = n1 + n0 * 40;
+            assert(i >= 0 && i < map.size());
             if(i%2) map[i] = 2.;
         }
     }
@@ -618,7 +613,7 @@ void MQT2_tester_int() {
     //-------------------------------
 
     {
-        constexpr int32_t size = 10*2*2;
+        constexpr int32_t size = 10*2*2*2*2*2*2*2;
         map.resize(size*size);
         std::fill(map.begin(), map.end(), 0);
 
@@ -638,7 +633,7 @@ void MQT2_tester_int() {
         int32_t suc = 0;
         int32_t fail = 0;
 
-        const int32_t bc = size / 15;
+        const int32_t bc = size / 10;
         std::vector<bool> mm;
         mm.resize(bc * bc);
         std::fill(mm.begin(), mm.end(), true);
@@ -648,20 +643,21 @@ void MQT2_tester_int() {
             {
                 const int32_t width = Dist(2, size/4)(rnd);
                 const int32_t height = Dist(2, size/4)(rnd);
-                const int32_t xmin = Dist(0, size - width)(rnd);
-                const int32_t ymin = Dist(0, size - height)(rnd);
+                const int32_t xmin = Dist(0, size - width - 1)(rnd);
+                const int32_t ymin = Dist(0, size - height - 1)(rnd);
                 const double h = std::round(Dist(10, 200)(rnd));
 
                 for(int32_t n0 = ymin; n0 <= ymin + height; ++n0){
                     for(int32_t n1 = xmin; n1 <= xmin + width; ++n1){
                         const int32_t i = n1 + n0 * size;
+                        assert(i >= 0 && i < map.size());
                         map[i] = k;
                     }
                 }
 
                 std::fill(mm.begin(), mm.end(), false);
-                for (int32_t n1 = xmin / 15; n1 <= std::min((xmin + width) / 15 + 1, bc - 1); ++n1) {
-                    for (int32_t n0 = ymin / 15; n0 <= std::min((ymin + height) / 15 + 1, bc - 1); ++n0) {         
+                for (int32_t n1 = xmin / 10; n1 <= std::min((xmin + width) / 10 + 1, bc - 1); ++n1) {
+                    for (int32_t n0 = ymin / 10; n0 <= std::min((ymin + height) / 10 + 1, bc - 1); ++n0) {         
                         const int32_t iid = n0 + n1 * bc;
                         mm[iid] = true;
                     }
@@ -762,8 +758,8 @@ void MQT2_tester_int() {
             {
                 const int32_t width = Dist(10, 500)(rnd);
                 const int32_t height = Dist(10, 500)(rnd);
-                const int32_t xmin = Dist(0, 6400 - width)(rnd);
-                const int32_t ymin = Dist(0, 6400 - height)(rnd);
+                const int32_t xmin = Dist(0, 6400 - width - 1)(rnd);
+                const int32_t ymin = Dist(0, 6400 - height - 1)(rnd);
                 const int32_t h = std::round(Dist(10., 200.)(rnd));
 
                 for(int32_t n0 = ymin; n0 <= ymin + height; ++n0){
@@ -773,13 +769,13 @@ void MQT2_tester_int() {
                     }
                 }
 
-                // std::fill(mm.begin(), mm.end(), false);
-                // for (int32_t n1 = xmin / 25; n1 <= std::min((xmin + width) / 25 + 1, bc - 1); ++n1) {
-                //     for (int32_t n0 = ymin / 25; n0 <= std::min((ymin + height) / 25 + 1, bc - 1); ++n0) {         
-                //         const int32_t iid = n0 + n1 * bc;
-                //         mm[iid] = true;
-                //     }
-                // }
+                std::fill(mm.begin(), mm.end(), false);
+                for (int32_t n1 = xmin / 25; n1 <= std::min((xmin + width) / 25 + 1, bc - 1); ++n1) {
+                    for (int32_t n0 = ymin / 25; n0 <= std::min((ymin + height) / 25 + 1, bc - 1); ++n0) {         
+                        const int32_t iid = n0 + n1 * bc;
+                        mm[iid] = true;
+                    }
+                }
 
                 tree1.recompute(mm);
             }
@@ -1024,10 +1020,10 @@ void depth_test() {
 int main() {
     //test_bucket_node();
     //bench_tree();
-    bench_tree2();
+    //bench_tree2();
     //morton_test();
-    //MQT2_tester_float();
-    //MQT2_tester_int();
+    MQT2_tester_float();
+    MQT2_tester_int();
 
     //idx_test();
 
