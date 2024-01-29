@@ -224,7 +224,7 @@ void MQT2_tester_float() {
         int32_t suc = 0;
         int32_t fail = 0;
 
-        const int32_t bc = size / 15;
+        const int32_t bc = size / 10;
         std::vector<bool> mm;
         mm.resize(bc * bc);
         std::fill(mm.begin(), mm.end(), true);
