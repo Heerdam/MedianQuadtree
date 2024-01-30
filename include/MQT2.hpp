@@ -80,7 +80,7 @@ namespace MQT2 {
                 const int32_t _level,
                 const Vec2& _bmin,
                 const Vec2& _bmax              
-            ) :  level_(_level), idx_(_idx), bmin_(_bmin), bmax_(_bmax) {}
+            ) :  idx_(_idx), level_(_level), bmin_(_bmin), bmax_(_bmax) {}
             //----------------
             Bucket(Bucket&&) = default;
             Bucket(const Bucket&) = delete;
