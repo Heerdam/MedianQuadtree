@@ -58,6 +58,47 @@ namespace MQT2 {
             return { l, m, h };
 	    };//naive_tester
 
+        template<class T, class ALLOCATOR = std::allocator<T>>
+        [[nodiscard]] inline std::tuple<int32_t, int32_t, int32_t> naive_border_tester(
+        const std::vector<T, ALLOCATOR>& _map,
+        const Vec2& _min,
+        const Vec2& _max,
+        const int32_t _N,
+        const T _h
+        ) {
+            int32_t h = 0, m = 0, l = 0;
+            const int32_t min0 = std::max(0, _min[0]);
+            const int32_t max0 = std::min(_N, _max[0]);
+            const int32_t min1 = std::max(0, _min[1]);
+            const int32_t max1 = std::min(_N, _max[1]);
+            //----------------------
+            for (int32_t n0 = min0; n0 < max0; ++n0) {
+                const int32_t i1 = min1 + n0 * _N;
+                const int32_t i2 = (max1 - 1) + n0 * _N;
+                const auto hh1 = _map[i1];
+                const auto hh2 = _map[i2];
+                if(Detail::isEqual(hh1, _h)) m++;
+                else if(hh1 > _h) h++;
+                else l++;  
+                if(Detail::isEqual(hh2, _h)) m++;
+                else if(hh2 > _h) h++;
+                else l++; 
+            }
+            for (int32_t n1 = min1; n1 < max1; ++n1) {
+                const int32_t i1 = n1 + min0 * _N;
+                const int32_t i2 = n1 + (max1 - 1) * _N;
+                const auto hh1 = _map[i1];
+                const auto hh2 = _map[i2];
+                if(Detail::isEqual(hh1, _h)) m++;
+                else if(hh1 > _h) h++;
+                else l++;  
+                if(Detail::isEqual(hh2, _h)) m++;
+                else if(hh2 > _h) h++;
+                else l++; 
+            }
+            return { l, m, h };
+	    };//naive_border_tester
+
         //----------------------------------
 
         template<class T, int32_t SIZE, class ALLOCATOR = std::allocator<T>>
@@ -162,6 +203,7 @@ namespace MQT2 {
         //----------------
         //[min, max)
         [[nodiscard]] std::tuple<int32_t, int32_t, int32_t> check_overlap(const Vec2& _min, const Vec2& _max, const T _h) const noexcept;
+        [[nodiscard]] std::tuple<int32_t, int32_t, int32_t> check_border_overlap(const Vec2& _min, const Vec2& _max, const T _h) const noexcept;
         //----------------
         void print_debug() const;
     };//MedianQuadTree
@@ -239,7 +281,12 @@ void MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::recompute(const std::vector<bool>
 template<class T, int32_t SIZE, class ALLOCATOR>
 std::tuple<int32_t, int32_t, int32_t> MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::check_overlap(const Vec2& _min, const Vec2& _max, const T _h) const noexcept {
     return impl_overlap(_min, _max, _h, 0, 1, n_[0]);
-}
+}//MQT2::MedianQuadTree::check_overlap
+
+template<class T, int32_t SIZE, class ALLOCATOR>
+std::tuple<int32_t, int32_t, int32_t> MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::check_border_overlap(const Vec2& _min, const Vec2& _max, const T _h) const noexcept {
+    return Detail::naive_border_tester<T>(map_, _min, _max, N_, _h);
+}//MQT2::MedianQuadTree::check_border_overlap
 
 template<class T, int32_t SIZE, class ALLOCATOR>
 void MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::impl_recompute(

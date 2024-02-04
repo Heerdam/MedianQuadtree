@@ -957,6 +957,85 @@ void bench_tree2() {
 
 }
 
+void bench_border_tree2() {
+    using namespace MQT2;
+
+    std::random_device rd;
+    const auto seed = rd();
+    std::cout << seed << std::endl;
+    std::mt19937_64 rand(seed);
+
+    using SCALAR = uint8_t;
+
+    std::vector<SCALAR> map;
+ 
+    using Dist = ::std::uniform_int_distribution<>;
+    using Rand = std::mt19937_64;
+    //using DistD = ::std::uniform_real_distribution<SCALAR>;
+
+    map.resize(7680 * 7680);
+    std::uniform_int_distribution<> dist (0, int32_t(map.size() - 1));
+    std::fill(map.begin(), map.end(), 0.);
+    int32_t t = 0;
+
+    if constexpr(false){
+        for(int32_t i = 0; i < 2000 * 7680; ++i)
+            map[dist(rand)] = 2.;
+
+    }
+
+    //sudo chrt -f 99 ./mqttest 
+
+    for(int32_t k = 0; k < 100; ++k){
+
+        {
+            const int32_t width = Dist(10, 500)(rand);
+            const int32_t height = Dist(10, 500)(rand);
+            const int32_t xmin = Dist(0, 7680 - width)(rand);
+            const int32_t ymin = Dist(0, 7680 - height)(rand);
+            const SCALAR h = k;
+
+            for(int32_t n0 = ymin; n0 <= ymin + height; ++n0){
+                for(int32_t n1 = xmin; n1 <= xmin + width; ++n1){
+                    const int32_t i = n1 + n0 * 7680;
+                    map[i] = h;
+                }
+            }
+        }
+
+    }
+    std::ofstream file ("res.txt");
+    const SCALAR hh = 50.; // std::round(DistD(10., 200.)(rand));
+
+    std::cout << "-----------------" << std::endl;
+
+    {
+        file << "tree 1" << std::endl;
+        {
+            MedianQuadTree<SCALAR, 15> tree(map, 7680);
+
+            for(int32_t i = 1; i < 50; ++i){
+
+                double tmp = 0.;
+                for(int32_t j = 0; j < 12; ++j){
+                    const auto start = std::chrono::high_resolution_clock::now();
+                    const auto[l1, m1, h1] = tree.check_border_overlap(Vec2{i * 50, i * 50}, Vec2{7680 - i * 50, 7680 - i * 50}, hh);
+                    const std::chrono::duration<double> ee = std::chrono::high_resolution_clock::now() - start;          
+                    tmp += ee.count();
+                    t += l1;
+                }
+
+                file << tmp / 12. << std::endl;
+
+            }
+        }
+
+    }
+
+    std::cout << t << std::endl;
+
+}
+
 void idx_test() {
 
     const auto idx_n = [](const int32_t _level, const int32_t _idx)->int32_t {
@@ -1021,9 +1100,10 @@ int main() {
     //test_bucket_node();
     //bench_tree();
     //bench_tree2();
+    bench_border_tree2();
     //morton_test();
-    MQT2_tester_float();
-    MQT2_tester_int();
+    //MQT2_tester_float();
+    //MQT2_tester_int();
 
     //idx_test();
 
