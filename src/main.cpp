@@ -827,7 +827,7 @@ void bench_tree2() {
     std::cout << seed << std::endl;
     std::mt19937_64 rand(seed);
 
-    using SCALAR = uint8_t;
+    using SCALAR = float;
 
     std::vector<SCALAR> map;
     // map.resize(1000 * 1000);
@@ -932,7 +932,7 @@ void bench_tree2() {
         //     }
         // }
 
-        if constexpr(false){
+        if constexpr(true){
             file << std::endl;
             file << "naive 1" << std::endl;
             for(int32_t i = 1; i < 50; ++i){
@@ -1099,8 +1099,8 @@ void depth_test() {
 int main() {
     //test_bucket_node();
     //bench_tree();
-    //bench_tree2();
-    bench_border_tree2();
+    bench_tree2();
+    //bench_border_tree2();
     //morton_test();
     //MQT2_tester_float();
     //MQT2_tester_int();

@@ -9,10 +9,44 @@
 #include <type_traits>
 #include <variant>
 #include <iostream>
+#include <sstream>
+#include <mutex>
+#include <condition_variable>
+
+//#include <cuda_runtime.h>
 
 namespace MQT2 {
 
     using Vec2 = std::array<int32_t, 2>;
+
+    //----------------------------------
+
+    namespace CUDA {
+
+        class Promise {
+            bool done_;
+            std::unique_ptr<std::mutex> m_;
+            std::unique_ptr<std::condition_variable> cv_;
+            std::vector<std::vector<std::tuple<int32_t, int32_t, int32_t>>> data_;
+        public:
+            Promise();
+            //-------------
+            Promise(Promise&&) = default;
+            Promise(const Promise&) = delete;
+            Promise& operator=(Promise&&) = default;
+            Promise& operator=(const Promise&) = delete;
+            //-------------
+            void wait();
+            [[nodiscard]] const auto& data() const { return data_; }
+            [[nodiscard]] bool isDone() const;
+        };//Promise
+
+        extern "C" {
+
+
+        }
+
+    }//CUDA
 
     //----------------------------------
 
@@ -44,7 +78,7 @@ namespace MQT2 {
         const Vec2& _max,
         const int32_t _N,
         const T _h
-        ) {
+        ) noexcept {
             int32_t h = 0, m = 0, l = 0;
             for (int32_t n0 = std::max(0, _min[0]); n0 < std::min(_N, _max[0]); ++n0) {
                 for (int32_t n1 = std::max(0, _min[1]); n1 < std::min(_N, _max[1]); ++n1) {
@@ -65,7 +99,7 @@ namespace MQT2 {
         const Vec2& _max,
         const int32_t _N,
         const T _h
-        ) {
+        ) noexcept {
             int32_t h = 0, m = 0, l = 0;
             const int32_t min0 = std::max(0, _min[0]);
             const int32_t max0 = std::min(_N, _max[0]);
@@ -101,7 +135,7 @@ namespace MQT2 {
 
         //----------------------------------
 
-        template<class T, int32_t SIZE, class ALLOCATOR = std::allocator<T>>
+        template<class T, int32_t SIZE>
         struct Bucket {
             int32_t idx_;
             int32_t level_;
@@ -132,7 +166,7 @@ namespace MQT2 {
 
         //----------------
 
-        template<class T, int32_t SIZE, class ALLOCATOR = std::allocator<T>>
+        template<class T, int32_t SIZE>
         struct Node {
             Vec2 bmin_, bmax_;
             T max_, min_;
@@ -149,8 +183,16 @@ namespace MQT2 {
 
     }
 
+    //----------------------------------
+
+    template<class T, int32_t SIZE, class ALLOCATOR>
+    class MedianCudaTree;
+
     template<class T, int32_t SIZE = 15, class ALLOCATOR = std::allocator<T>>
     class MedianQuadTree {
+
+        template<class, int32_t, class>
+        friend class MedianCudaTree;
 
         const std::vector<T, ALLOCATOR>& map_;
         const int32_t N_;
@@ -158,14 +200,14 @@ namespace MQT2 {
 
         int32_t idd = 0;
 
-        std::vector<Detail::Bucket<T, SIZE, ALLOCATOR>> b_;
-        std::vector<Detail::Node<T, SIZE, ALLOCATOR>> n_;
+        std::vector<Detail::Bucket<T, SIZE>> b_;
+        std::vector<Detail::Node<T, SIZE>> n_;
 
-        void impl_recompute(const int32_t _idx, const int32_t _level, Detail::Node<T, SIZE, ALLOCATOR>& _node, const std::vector<bool>& _m);
-        void impl_recompute(Detail::Bucket<T, SIZE, ALLOCATOR>& _bucket, const std::vector<bool>& _m);
+        void impl_recompute(const int32_t _idx, const int32_t _level, Detail::Node<T, SIZE>& _node, const std::vector<bool>& _m);
+        void impl_recompute(Detail::Bucket<T, SIZE>& _bucket, const std::vector<bool>& _m);
 
-        void impl_print(const int32_t _idx, const int32_t _level, const Detail::Node<T, SIZE, ALLOCATOR>& _node) const;
-        void impl_print(const Detail::Bucket<T, SIZE, ALLOCATOR>& _bucket) const;
+        void impl_print(const int32_t _idx, const int32_t _level, const Detail::Node<T, SIZE>& _node) const;
+        void impl_print(const Detail::Bucket<T, SIZE>& _bucket) const;
 
         std::tuple<int32_t, int32_t, int32_t> impl_overlap(
             const Vec2& _min,
@@ -173,14 +215,14 @@ namespace MQT2 {
             const T _h,
             const int32_t _idx, 
             const int32_t _level, 
-            const Detail::Node<T, SIZE, ALLOCATOR>& _node
+            const Detail::Node<T, SIZE>& _node
         ) const;
         
         std::tuple<int32_t, int32_t, int32_t> impl_overlap(
             const Vec2& _min,
             const Vec2& _max,
             const T _h,
-            const Detail::Bucket<T, SIZE, ALLOCATOR>& _bucket
+            const Detail::Bucket<T, SIZE>& _bucket
         ) const;
 
     public:
@@ -202,13 +244,49 @@ namespace MQT2 {
         void recompute(const std::vector<bool>& _m);
         //----------------
         //[min, max)
-        [[nodiscard]] std::tuple<int32_t, int32_t, int32_t> check_overlap(const Vec2& _min, const Vec2& _max, const T _h) const noexcept;
-        [[nodiscard]] std::tuple<int32_t, int32_t, int32_t> check_border_overlap(const Vec2& _min, const Vec2& _max, const T _h) const noexcept;
+        [[nodiscard]] std::tuple<int32_t, int32_t, int32_t> 
+        check_overlap(const Vec2& _min, const Vec2& _max, const T _h) const noexcept;
+
+        //[min, max)
+        [[nodiscard]] std::tuple<int32_t, int32_t, int32_t> 
+        check_border_overlap(const Vec2& _min, const Vec2& _max, const T _h) const noexcept;
         //----------------
         void print_debug() const;
     };//MedianQuadTree
 
+    //----------------------------------
+
+    template<class T, int32_t SIZE = 15, class ALLOCATOR = std::allocator<T>>
+    class MedianCudaTree {
+
+        std::unique_ptr<MedianQuadTree<T, SIZE, ALLOCATOR>> tree_;
+
+    public:
+
+        MedianCudaTree(
+            const std::vector<T, ALLOCATOR>& _map,
+            const int32_t _n
+        );
+        //----------------
+        MedianCudaTree(MedianCudaTree&&) = default;
+        MedianCudaTree(const MedianCudaTree&) = delete;
+        MedianCudaTree& operator=(MedianCudaTree&&) = default;
+        MedianCudaTree& operator=(const MedianCudaTree&) = delete;
+        ~MedianCudaTree() = default;
+        //----------------
+        //[min, max)
+        template<bool BLOCKING = true>
+        [[nodiscard]] CUDA::Promise exec_range_check(const std::vector<std::tuple<int32_t, int32_t, int32_t>>& _boxes);
+
+        void recompute(const std::vector<bool>& _m);
+
+        void barrier();
+
+    };//MedianCudaTree
+
 }//MQT2
+
+//----------------------------------
 
 template<class T, int32_t SIZE, class ALLOCATOR>
 MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::MedianQuadTree(
@@ -222,8 +300,8 @@ MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::MedianQuadTree(
     assert(_n%BUCKET_SIZE == 0);
     //-----------------
     const int32_t bc = _n / BUCKET_SIZE;
-    max_level_ = int32_t( std::round(std::log(bc) / std::log(2)) ) + 1;
-    //max_level_ = int32_t( std::round(std::log2(bc)) ) + 1;
+    //max_level_ = int32_t( std::round(std::log(bc) / std::log(2)) ) + 1;
+    max_level_ = int32_t( std::rint(std::log2(bc)) ) + 1;
 
     const int32_t dc = int32_t((std::pow(4, max_level_ - 1) - 1) / 3);
 
@@ -234,28 +312,28 @@ MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::MedianQuadTree(
     for(int32_t j = 0; j < bc; j+=2){
         for(int32_t i = 0; i < bc; i+=2){
 
-            b_[k] = Bucket<T, SIZE, ALLOCATOR>( 
+            b_[k] = Bucket<T, SIZE>( 
                 i + j * bc,
                 max_level_,
                 Vec2{i * BUCKET_SIZE, j * BUCKET_SIZE},
                 Vec2{i * BUCKET_SIZE + BUCKET_SIZE, j * BUCKET_SIZE + BUCKET_SIZE}
             );
             k++;
-            b_[k] = Bucket<T, SIZE, ALLOCATOR>( 
+            b_[k] = Bucket<T, SIZE>( 
                 (i + 1) + j * bc,
                 max_level_,
                 Vec2{(i + 1) * BUCKET_SIZE, j * BUCKET_SIZE},
                 Vec2{(i + 1) * BUCKET_SIZE + BUCKET_SIZE, j * BUCKET_SIZE + BUCKET_SIZE}
             );
             k++;
-            b_[k] = Bucket<T, SIZE, ALLOCATOR>( 
+            b_[k] = Bucket<T, SIZE>( 
                 i + (j + 1) * bc,
                 max_level_,
                 Vec2{i * BUCKET_SIZE, (j + 1) * BUCKET_SIZE},
                 Vec2{i * BUCKET_SIZE + BUCKET_SIZE, (j + 1) * BUCKET_SIZE + BUCKET_SIZE}
             );
             k++;
-            b_[k] = Bucket<T, SIZE, ALLOCATOR>( 
+            b_[k] = Bucket<T, SIZE>( 
                 (i + 1) + (j + 1) * bc,
                 max_level_,
                 Vec2{(i + 1) * BUCKET_SIZE, (j + 1) * BUCKET_SIZE},
@@ -292,7 +370,7 @@ template<class T, int32_t SIZE, class ALLOCATOR>
 void MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::impl_recompute(
     const int32_t _idx, 
     const int32_t _level, 
-    Detail::Node<T, SIZE, ALLOCATOR>& _n, 
+    Detail::Node<T, SIZE>& _n, 
     const std::vector<bool>& _m
 ) {
     using namespace Detail;
@@ -350,7 +428,7 @@ void MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::impl_recompute(
 }//MQT2::MedianQuadTree::impl_recompute
 
 template<class T, int32_t SIZE, class ALLOCATOR>
-void MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::impl_recompute(Detail::Bucket<T, SIZE, ALLOCATOR>& _b, const std::vector<bool>& _m) {
+void MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::impl_recompute(Detail::Bucket<T, SIZE>& _b, const std::vector<bool>& _m) {
     using namespace Detail;
 
     if(!_m[_b.idx_]) return;
@@ -401,7 +479,7 @@ std::tuple<int32_t, int32_t, int32_t> MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::
     const T _h,
     const int32_t _idx, 
     const int32_t _level, 
-    const Detail::Node<T, SIZE, ALLOCATOR>& _n
+    const Detail::Node<T, SIZE>& _n
 ) const {
     using namespace Detail;
 
@@ -426,7 +504,7 @@ std::tuple<int32_t, int32_t, int32_t> MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::
             else return { 0, 0, (max0 - min0) * (max1 - min1) };
 
         } else {
-            const int32_t r = N_ / int32_t(std::pow(2, _level - 1));
+            const int32_t r = N_ / int32_t(std::rint(std::pow(2, _level - 1)));
             if(isH) return { r*r, 0, 0};
             if (isM) return { 0, r*r, 0};
             else return { 0, 0, r*r};
@@ -439,7 +517,7 @@ std::tuple<int32_t, int32_t, int32_t> MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::
     if(_level + 1 == max_level_){
         constexpr double frac1 = 1./3.;
         constexpr double frac2 = 4./3.;
-        const int32_t c1 = int32_t(4. * double(_idx) - 4. * std::pow(4., _level - 1) * frac1 + frac2);
+        const int32_t c1 = int32_t(std::rint(4. * double(_idx) - 4. * std::pow(4., _level - 1) * frac1 + frac2));
         const int32_t c2 = c1 + 1;
         const int32_t c3 = c2 + 1;
         const int32_t c4 = c3 + 1;
@@ -475,7 +553,7 @@ std::tuple<int32_t, int32_t, int32_t> MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::
     const Vec2& _min,
     const Vec2& _max,
     const T _h,
-    const Detail::Bucket<T, SIZE, ALLOCATOR>& _b
+    const Detail::Bucket<T, SIZE>& _b
 ) const{
     using namespace Detail;
 
@@ -585,6 +663,56 @@ std::tuple<int32_t, int32_t, int32_t> MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::
 }//MQT2::MedianQuadTree::impl_overlap
 
 //----------------------------------------------
+
+inline MQT2::CUDA::Promise::Promise() : done_(false) {
+    m_ = std::make_unique<std::mutex>();
+}//MQT2::CUDA::Promise::Promise
+
+inline bool MQT2::CUDA::Promise::isDone() const {
+    std::lock_guard<std::mutex> lock(*m_);
+    return done_;
+}//MQT2::CUDA::Promise::isDone
+
+inline void MQT2::CUDA::Promise::wait() {
+    cv_ = std::make_unique<std::condition_variable>();
+    std::unique_lock<std::mutex> lock(*m_);
+    cv_->wait(lock, [&]{ return done_; });
+}//MQT2::CUDA::Promise::wait
+
+//----------------------------------------------
+
+template<class T, int32_t SIZE, class ALLOCATOR>
+MQT2::MedianCudaTree<T, SIZE, ALLOCATOR>::MedianCudaTree(
+    const std::vector<T, ALLOCATOR>& _map,
+    const int32_t _n
+) {
+    tree_ = std::make_unique<MedianQuadTree<T, SIZE, ALLOCATOR>>(_map, _n);
+}//MQT2::MedianCudaTree::MedianCudaTree
+
+template<class T, int32_t SIZE, class ALLOCATOR>
+template<bool BLOCKING>
+MQT2::CUDA::Promise MQT2::MedianCudaTree<T, SIZE, ALLOCATOR>::exec_range_check(
+    const std::vector<std::tuple<int32_t, int32_t, int32_t>>& _boxes
+) {
+    
+    //cudaMalloc()
+  
+
+}//MQT2::MedianCudaTree::exec_range_check
+
+template<class T, int32_t SIZE, class ALLOCATOR>
+void MQT2::MedianCudaTree<T, SIZE, ALLOCATOR>::recompute(const std::vector<bool>& _m) {
+
+
+}//MQT2::MedianCudaTree::recompute
+
+template<class T, int32_t SIZE, class ALLOCATOR>
+void MQT2::MedianCudaTree<T, SIZE, ALLOCATOR>::barrier() {
+
+
+}//MQT2::MedianCudaTree::barrier
+
+//----------------------------------------------
 template<class T, int32_t SIZE, class ALLOCATOR>
 void MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::print_debug() const {
     std::cout << "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-" << std::endl;
@@ -595,7 +723,7 @@ void MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::print_debug() const {
 }//MQT2::MedianQuadTree::print_debug
 
 template<class T, int32_t SIZE, class ALLOCATOR>
-void MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::impl_print(const int32_t _idx, const int32_t _level, const Detail::Node<T, SIZE, ALLOCATOR>& t) const {
+void MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::impl_print(const int32_t _idx, const int32_t _level, const Detail::Node<T, SIZE>& t) const {
     std::stringstream ss;
     for(int32_t i = 0; i < _level; ++i)
         ss << "  ";
@@ -645,7 +773,7 @@ void MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::impl_print(const int32_t _idx, co
 }//MQT2::MedianQuadTree::impl_print
 
 template<class T, int32_t SIZE, class ALLOCATOR>
-void MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::impl_print(const Detail::Bucket<T, SIZE, ALLOCATOR>& t) const {
+void MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::impl_print(const Detail::Bucket<T, SIZE>& t) const {
     std::stringstream ss;
     for(int32_t i = 0; i < t.level_; ++i)
         ss << "  ";
