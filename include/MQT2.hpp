@@ -15,13 +15,14 @@
 #include <cmath>
 
 //#include <cuda_runtime.h>
+//cmake .. -DUSE_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=61
 
 namespace MQT2 {
 
     using Vec2 = std::array<int32_t, 2>;
 
     //----------------------------------
-
+#ifdef UCUDA
     namespace CUDA {
 
         class Promise {
@@ -48,6 +49,7 @@ namespace MQT2 {
         }
 
     }//CUDA
+#endif
 
     //----------------------------------
 
@@ -185,15 +187,18 @@ namespace MQT2 {
     }
 
     //----------------------------------
-
+#ifdef UCUDA
     template<class T, int32_t SIZE, class ALLOCATOR>
     class MedianCudaTree;
+#endif
 
     template<class T, int32_t SIZE = 15, class ALLOCATOR = std::allocator<T>>
     class MedianQuadTree {
 
+#ifdef UCUDA
         template<class, int32_t, class>
         friend class MedianCudaTree;
+#endif
 
         const std::vector<T, ALLOCATOR>& map_;
         const int32_t N_;
@@ -256,7 +261,7 @@ namespace MQT2 {
     };//MedianQuadTree
 
     //----------------------------------
-
+#ifdef UCUDA
     template<class T, int32_t SIZE = 15, class ALLOCATOR = std::allocator<T>>
     class MedianCudaTree {
 
@@ -284,6 +289,7 @@ namespace MQT2 {
         void barrier();
 
     };//MedianCudaTree
+#endif
 
 }//MQT2
 
@@ -664,7 +670,7 @@ std::tuple<int32_t, int32_t, int32_t> MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::
 }//MQT2::MedianQuadTree::impl_overlap
 
 //----------------------------------------------
-
+#ifdef UCUDA
 inline MQT2::CUDA::Promise::Promise() : done_(false) {
     m_ = std::make_unique<std::mutex>();
 }//MQT2::CUDA::Promise::Promise
@@ -712,7 +718,7 @@ void MQT2::MedianCudaTree<T, SIZE, ALLOCATOR>::barrier() {
 
 
 }//MQT2::MedianCudaTree::barrier
-
+#endif
 //----------------------------------------------
 template<class T, int32_t SIZE, class ALLOCATOR>
 void MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::print_debug() const {
