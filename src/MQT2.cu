@@ -155,13 +155,11 @@ namespace MQT2::CUDA {
 
 
     template<class T, int32_t SIZE, class CF>
-    __global__ void init(
+    __global__ std::pair<int32_t, int32_t> init(
         const std::vector<MQT2::Detail::Bucket<T, SIZE>>& _buckets,
         const std::vector<MQT2::Detail::Node<T, SIZE>>& _nodes,
+        const std::vector<int32_t>& _boxes,
         const int32_t _m0, const int32_t _m1,
-        const int32_t _b1,
-        const int32_t _b2,
-        const int32_t _b3,
         CF&& _cf
     ){
 
@@ -172,6 +170,10 @@ namespace MQT2::CUDA {
 
         Buffer<MQT2::Detail::Node<T, SIZE>> nodes (_nodes.size());
         nodes.cpy_to_device((void*)_nodes.data());
+
+        Buffer<int32_t> boxes (_boxes.size());
+        boxes.cpy_to_device((void*)_boxes.data());
+
 
         Buffer<int32_t> res (3 * _m0 * _m1);
 

@@ -12,6 +12,7 @@
 #include <sstream>
 #include <mutex>
 #include <condition_variable>
+#include <cmath>
 
 //#include <cuda_runtime.h>
 
