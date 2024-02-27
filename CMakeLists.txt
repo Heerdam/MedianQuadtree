@@ -4,6 +4,8 @@ cmake_minimum_required(VERSION 3.5)
 project(MQT2)
 project(MQT2 LANGUAGES CXX)
 
+set(USE_CUDA on)
+
 if(USE_CUDA)
 	enable_language(CUDA)
 	add_definitions(-DUCUDA=1)
@@ -37,7 +39,7 @@ endif()
 
 #-ffast-math
 
-#set_target_properties(mqttest PROPERTIES CUDA_ARCHITECTURES "61")
+set_target_properties(mqttest PROPERTIES CUDA_ARCHITECTURES "61")
 
 target_include_directories(MQT2 INTERFACE include )
 target_include_directories(mqttest PUBLIC include )

@@ -17,6 +17,10 @@
 //#include <cuda_runtime.h>
 //cmake .. -DUSE_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=61
 
+#ifndef UCUDA
+#define UCUDA 
+#endif
+
 namespace MQT2 {
 
     using Vec2 = std::array<int32_t, 2>;
@@ -308,7 +312,7 @@ MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::MedianQuadTree(
     //-----------------
     const int32_t bc = _n / BUCKET_SIZE;
     //max_level_ = int32_t( std::round(std::log(bc) / std::log(2)) ) + 1;
-    max_level_ = int32_t( std::rint(std::log2(bc)) ) + 1;
+    max_level_ = int32_t( std::round(std::log2(bc)) ) + 1;
 
     const int32_t dc = int32_t((std::pow(4, max_level_ - 1) - 1) / 3);
 
@@ -511,7 +515,7 @@ std::tuple<int32_t, int32_t, int32_t> MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::
             else return { 0, 0, (max0 - min0) * (max1 - min1) };
 
         } else {
-            const int32_t r = N_ / int32_t(std::rint(std::pow(2, _level - 1)));
+            const int32_t r = N_ / int32_t(std::round(std::pow(2, _level - 1)));
             if(isH) return { r*r, 0, 0};
             if (isM) return { 0, r*r, 0};
             else return { 0, 0, r*r};
@@ -524,7 +528,7 @@ std::tuple<int32_t, int32_t, int32_t> MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::
     if(_level + 1 == max_level_){
         constexpr double frac1 = 1./3.;
         constexpr double frac2 = 4./3.;
-        const int32_t c1 = int32_t(std::rint(4. * double(_idx) - 4. * std::pow(4., _level - 1) * frac1 + frac2));
+        const int32_t c1 = int32_t(std::round(4. * double(_idx) - 4. * std::pow(4., _level - 1) * frac1 + frac2));
         const int32_t c2 = c1 + 1;
         const int32_t c3 = c2 + 1;
         const int32_t c4 = c3 + 1;
