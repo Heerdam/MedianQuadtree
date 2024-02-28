@@ -20,8 +20,8 @@ namespace MQT2::CUDA {
             T* buffer_;
         public:
 
-            __global__ BufferView() = delete;
-            __global__ BufferView(T* _ptr, int32_t _s) : size_(_s), buffer_(_ptr) {}
+            __host__ __device__ BufferView() = delete;
+            __host__ __device__ BufferView(T* _ptr, int32_t _s) : size_(_s), buffer_(_ptr) {}
 
             __device__ T& operator[](int32_t _idx){
                 assert(_idx >= 0 && _idx < size());
@@ -33,7 +33,7 @@ namespace MQT2::CUDA {
                 return buffer_[_idx];
             }
 
-            __global__ int32_t size() const {
+            __host__ __device__ int32_t size() const {
                 return size_;
             }
 
@@ -41,7 +41,7 @@ namespace MQT2::CUDA {
                 return buffer_;
             }
 
-            __global__ void init_with_zero() {
+            __host__ __device__ void init_with_zero() {
                 cudaMemset(buffer_, 0, size() * sizeof(T));
             }
 
@@ -59,25 +59,25 @@ namespace MQT2::CUDA {
 
         public:
 
-            __global__ Buffer() : buffer_(nullptr) {}
+            __host__ __device__ Buffer() : buffer_(nullptr) {}
 
-            __global__ Buffer(int32_t _size) : size_(_size) {
+            __host__ __device__ Buffer(int32_t _size) : size_(_size) {
                 assert(_size >= 0);
                 cudaMalloc(&buffer_, size() * sizeof(T));
             }
 
-            __global__ Buffer(Buffer&&) = default;
-            __global__ Buffer(const Buffer&) = delete;
+            __host__ __device__ Buffer(Buffer&&) = default;
+            __host__ __device__ Buffer(const Buffer&) = delete;
 
-            __global__ Buffer& operator=(Buffer&&) = default;
-            __global__ Buffer& operator=(const Buffer&) = delete;
+            __host__ __device__ Buffer& operator=(Buffer&&) = default;
+            __host__ __device__ Buffer& operator=(const Buffer&) = delete;
 
-            __global__ ~Buffer() {
+            __host__ __device__ ~Buffer() {
                 if(buffer_)
                     cudaFree(buffer_);
             }
 
-            __global__ int32_t size() const {
+            __host__ __device__ int32_t size() const {
                 return size_;
             }
 
@@ -95,19 +95,19 @@ namespace MQT2::CUDA {
                 return buffer_;
             }
 
-            __global__ void cpy_to_device(void* _b){
+            __host__ __device__ void cpy_to_device(void* _b){
                 cudaMemcpy(buffer_, _b, size() * sizeof(T), cudaMemcpyHostToDevice);
             }
 
-            __global__ void cpy_from_device(void* _b){
+            __host__ __device__ void cpy_from_device(void* _b){
                  cudaMemcpy(_b, buffer_, size() * sizeof(T), cudaMemcpyDeviceToHost);
             }
 
-            __global__ void init_with_zero() {
+            __host__ __device__ void init_with_zero() {
                 cudaMemset(buffer_, 0, size() * sizeof(T));
             }
 
-            __global__ BufferView<T> to_view() const {
+            __host__ __device__ BufferView<T> to_view() const {
                 return BufferView<T>(buffer_, size_);
             }
 
@@ -151,6 +151,49 @@ namespace MQT2::CUDA {
 
         };//Queue
 
+        //--------------------------
+
+        template<class T>
+        __device__ inline std::tuple<int32_t, int32_t, int32_t> naive_border_tester(
+        const BufferView<T>& _map,
+        const CVec2& _min,
+        const CVec2& _max,
+        const int32_t _N,
+        const T _h
+        ) noexcept {
+            int32_t h = 0, m = 0, l = 0;
+            const int32_t min0 = max(0, _min.x_);
+            const int32_t max0 = min(_N, _max.x_);
+            const int32_t min1 = max(0, _min.y_);
+            const int32_t max1 = min(_N, _max.y_);
+            //----------------------
+            for (int32_t n0 = min0; n0 < max0; ++n0) {
+                const int32_t i1 = min1 + n0 * _N;
+                const int32_t i2 = (max1 - 1) + n0 * _N;
+                const auto hh1 = _map[i1];
+                const auto hh2 = _map[i2];
+                if(isEqual(hh1, _h)) m++;
+                else if(hh1 > _h) h++;
+                else l++;  
+                if(isEqual(hh2, _h)) m++;
+                else if(hh2 > _h) h++;
+                else l++; 
+            }
+            for (int32_t n1 = min1; n1 < max1; ++n1) {
+                const int32_t i1 = n1 + min0 * _N;
+                const int32_t i2 = n1 + (max1 - 1) * _N;
+                const auto hh1 = _map[i1];
+                const auto hh2 = _map[i2];
+                if(isEqual(hh1, _h)) m++;
+                else if(hh1 > _h) h++;
+                else l++;  
+                if(isEqual(hh2, _h)) m++;
+                else if(hh2 > _h) h++;
+                else l++; 
+            }
+            return { l, m, h };
+	    };//naive_border_tester
+
         //-----------------------------------------
 
         template<class T, int32_t SIZE>
@@ -158,22 +201,24 @@ namespace MQT2::CUDA {
             Queue<std::pair<int32_t, int32_t>>& qn,
             Queue<int32_t>& qb,
             const MQT2::Detail::Node<T, SIZE>& _n,
-            const Vec2& _min,
-            const Vec2& _max,
+            const CVec2& _min,
+            const CVec2& _max,
+            const int32_t N_,
+            const int32_t max_level_,
             const T _h,
             const int32_t _idx, 
             const int32_t _level
         ) {
 
-            if(_max[0] < _n.bmin_[0] || _n.bmax_[0] < _min[0] || _max[1] < _n.bmin_[1] || _n.bmax_[1] < _min[1]) return { 0, 0, 0 };
+            if(_max.v_[0] < _n.bmin_.v_[0] || _n.bmax_.v_[0] < _min.v_[0] || _max.v_[1] < _n.bmin_.v_[1] || _n.bmax_.v_[1] < _min.v_[1]) return { 0, 0, 0 };
 
-            const int32_t min0 = max(_min[0], _n.bmin_[0]);
-            const int32_t min1 = max(_min[1], _n.bmin_[1]);
+            const int32_t min0 = max(_min.v_[0], _n.bmin_.v_[0]);
+            const int32_t min1 = max(_min.v_[1], _n.bmin_.v_[1]);
 
-            const int32_t max0 = min(_max[0], _n.bmax_[0]);
-            const int32_t max1 = min(_max[1], _n.bmax_[1]);
+            const int32_t max0 = min(_max.v_[0], _n.bmax_.v_[0]);
+            const int32_t max1 = min(_max.v_[1], _n.bmax_.v_[1]);
 
-            const bool isPartial = !(min0 == _n.bmin_[0] && min1 == _n.bmin_[1] && max0 == _n.bmax_[0] && max1 == _n.bmax_[1]);
+            const bool isPartial = !(min0 == _n.bmin_.v_[0] && min1 == _n.bmin_.v_[1] && max0 == _n.bmax_.v_[0] && max1 == _n.bmax_.v_[1]);
             const bool isH = _h > _n.max_;
             const bool isM = isEqual<T>(_n.max_, _h);
 
@@ -233,24 +278,26 @@ namespace MQT2::CUDA {
 
         template<class T, int32_t SIZE>
         __device__ inline std::tuple<int32_t, int32_t, int32_t> impl_bucket(
+            const BufferView<T>& _map,
             const MQT2::Detail::Bucket<T, SIZE>& _b,
-            const Vec2& _min,
-            const Vec2& _max,
+            const CVec2& _min,
+            const CVec2& _max,
+            const int32_t N_,
             const T _h
         ) {
 
-            const int32_t min0 = max(_min[0], _b.bmin_[0]);
-            const int32_t min1 = max(_min[1], _b.bmin_[1]);
+            const int32_t min0 = max(_min.v_[0], _b.bmin_.v_[0]);
+            const int32_t min1 = max(_min.v_[1], _b.bmin_.v_[1]);
 
-            const int32_t max0 = min(_max[0], _b.bmax_[0]);
-            const int32_t max1 = min(_max[1], _b.bmax_[1]);
+            const int32_t max0 = min(_max.v_[0], _b.bmax_.v_[0]);
+            const int32_t max1 = min(_max.v_[1], _b.bmax_.v_[1]);
 
-            const bool isPartial = !(min0 == _b.bmin_[0] && min1 == _b.bmin_[1] && max0 == _b.bmax_[0] && max1 == _b.bmax_[1]);
+            const bool isPartial = !(min0 == _b.bmin_.v_[0] && min1 == _b.bmin_.v_[1] && max0 == _b.bmax_.v_[0] && max1 == _b.bmax_.v_[1]);
 
             if ( _b.isFlat_ && !isPartial) {
-                if(isEqual<T>(_h, _b.vals_.front())) return { 0, ( _b.bmax_[0] -  _b.bmin_[0]) * ( _b.bmax_[1] -  _b.bmin_[1]), 0 };   
-                else if (_h > _b.vals_.front()) return { ( _b.bmax_[0] -  _b.bmin_[0]) * ( _b.bmax_[1] -  _b.bmin_[1]), 0, 0 };
-                else return { 0, 0, ( _b.bmax_[0] -  _b.bmin_[0]) * ( _b.bmax_[1] -  _b.bmin_[1]) };
+                if(isEqual<T>(_h, _b.vals_.front())) return { 0, ( _b.bmax_.v_[0] -  _b.bmin_.v_[0]) * ( _b.bmax_.v_[1] -  _b.bmin_.v_[1]), 0 };   
+                else if (_h > _b.vals_.front()) return { ( _b.bmax_.v_[0] -  _b.bmin_.v_[0]) * ( _b.bmax_.v_[1] -  _b.bmin_[.v_1]), 0, 0 };
+                else return { 0, 0, ( _b.bmax_.v_[0] -  _b.bmin_.v_[0]) * ( _b.bmax_.v_[1] -  _b.bmin_.v_[1]) };
             }
 
             //--------------------
@@ -262,7 +309,7 @@ namespace MQT2::CUDA {
                 for (int32_t n0 = min0; n0 < max0; ++n0) {
                     for (int32_t n1 = min1; n1 < max1; ++n1) {
                         const int32_t i = n1 + n0 * N_;
-                        const auto hh = map_[i];
+                        const auto hh = _map[i];
                         if(isEqual<T>(hh, _h)) m++;
                         else if(hh > _h) h++;
                         else l++;    
@@ -287,7 +334,7 @@ namespace MQT2::CUDA {
                 for (int32_t n0 = min0; n0 < max0; ++n0) {
                     for (int32_t n1 = min1; n1 < max1; ++n1) {
                         const int32_t i = n1 + n0 * N_;
-                        const auto hh = map_[i];
+                        const auto hh = _map[i];
                         if(isEqual<T>(hh, _h)) m2++;
                         else if(hh > _h) h2++;
                         else l2++;    
@@ -345,65 +392,101 @@ namespace MQT2::CUDA {
 
         template<class T, int32_t SIZE, class CF>
         __device__ void impl_overlap(
+            BufferView<T> _map,
             BufferView<MQT2::Detail::Bucket<T, SIZE>> _b,
             BufferView<MQT2::Detail::Node<T, SIZE>> _n,
             BufferView<int32_t> _boxes,
-            BufferView<T> _res, 
+            BufferView<float> _res, 
             CF _cf,
-            const Vec2 _min,
-            const Vec2 _max,
+            const CVec2 _min,
+            const CVec2 _max,
+            const int32_t N_,
             const T _h
         ){
+
+            const int32_t bid = blockIdx.x*blockDim.x + threadIdx.x;
 
             Queue<std::pair<int32_t, int32_t>> qn (_n.size());
             Queue<int32_t> qb (_b.size());
 
-            const int32_t bid = blockIdx.x*blockDim.x + threadIdx.x;
+            const int32_t o_x = _boxes[bid];
+            const int32_t o_y = _boxes[bid+1];
+            const int32_t o_z = _boxes[bid+2];
 
+            Queue<std::tuple<int32_t, int32_t, int32_t, int32_t>> bx (3);
+            bx.push({ o_x, o_y, o_z, 0 });//xyz
+            bx.push({ o_y, o_x, o_z, 1 });//yxz
+            bx.push({ o_x, o_z, o_y, 2 });//xzy
+            bx.push({ o_y, o_z, o_x, 3 });//yzx
+            bx.push({ o_z, o_x, o_y, 4 });//zxy
+            bx.push({ o_z, o_y, o_x, 5 });//zyx
+
+            while(!bx.empty()){
+
+                const auto[x, y, z, p] = bx.front();
+                bx.pop();
            
-            for(int32_t n0 = _min.y_; n0 < 1; ++n0){
-                for(int32_t n1 = 0; n1 < 1; ++n1){
+                for(int32_t n0 = _min.y_; n0 < 1; ++n0){
+                    for(int32_t n1 = 0; n1 < 1; ++n1){
 
-                    int32_t l = 0, m = 0, h = 0;
+                        const int32_t idx = n1 + n0 * _N;
+                        const T h = _map[idx];
 
-                    while(!qn.empty()){
+                        int32_t l = 0, m = 0, h = 0;
 
-                        const auto[idx, lvl] n = qn.front();
-                        qn.pop();
+                        while(!qn.empty()){
 
-                        const auto[l1, m1, h1] = impl_node(qn, qb, _n[idx], _min, _max, _h, idx, lvl);
-                        l += l1;
-                        m += m1;
-                        h += h1;
+                            const auto[idx, lvl] n = qn.front();
+                            qn.pop();
+
+                            const auto[l1, m1, h1] = impl_node(qn, qb, _n[idx], _min, _max, _h, idx, lvl);
+                            l += l1;
+                            m += m1;
+                            h += h1;
+                        }
+
+                        while(!qb.empty()){
+
+                            const int32_t idx = qb.front();
+                            qb.pop();
+
+                            const auto[l1, m1, h1] = impl_bucket(_map, _b[idx], _min, _max, _h);
+                            l += l1;
+                            m += m1;
+                            h += h1;
+                        }
+
+                        const auto[bl, bm, bh] = naive_border_tester<T>(_map, _min, _max, _N, _h);
+                        CostResult r;
+                        r.n0_ = n0;
+                        r.n1_ = n1;
+                        r.height_ = h;
+                        r.m_ = m;
+                        r.l_ = l;
+                        r.bh_ = bh;
+                        r.bm_ = bm;
+                        r.bl_ = bl;
+                        r.oX_ = o_x;
+                        r.oY_ = o_y;
+                        r.oZ_ = o_z;
+                        r.x_ = x;
+                        r.y_ = y;
+                        r.z_ = z;
+                        r.perm_ = p;
+
+                        _res[bid] = _cf(r);
+
                     }
-
-                    while(!qb.empty()){
-
-                        const int32_t idx = qb.front();
-                        qb.pop();
-
-                        const auto[l1, m1, h1] = impl_bucket(_b[idx], _min, _max, _h);
-                        l += l1;
-                        m += m1;
-                        h += h1;
-                    }
-
-                    //border
-                    int32_t bl, bm, bh;
-
-                    const T cost = _cf(l, m, h, bl, bm, bh);
-
-                    _res[bid] = cost;
-
                 }
-            }
 
+            }
         }
 
     }//Detail
 
     template<class T, int32_t SIZE, class CF>
     __global__ std::pair<int32_t, int32_t> init(
+        const std::vector<T>& _map,
         const std::vector<MQT2::Detail::Bucket<T, SIZE>>& _buckets,
         const std::vector<MQT2::Detail::Node<T, SIZE>>& _nodes,
         const int32_t _m0, const int32_t _m1,
@@ -412,6 +495,9 @@ namespace MQT2::CUDA {
     ){
 
         using namespace Detail;
+
+        Buffer<T> map (_map.size());
+        map.cpy_to_device((void*)_map.data());
 
         Buffer<MQT2::Detail::Bucket<T, SIZE>> buckets (_buckets.size());
         buckets.cpy_to_device((void*)_buckets.data());
@@ -422,12 +508,12 @@ namespace MQT2::CUDA {
         Buffer<int32_t> boxes (_boxes.size());
         boxes.cpy_to_device((void*)_boxes.data());
 
-        Buffer<T> res (_boxes.size());
+        Buffer<float> res (_boxes.size() * 3);
         res.init_with_zero();
 
         //1024 threads per box
         for(size_t i = 0; i < _boxes.size() / 3; ++i){
-            impl_overlap<<<32, 32, 1>>>(buckets.to_view(), nodes.to_view(), _boxes.to_view(), res.to_view(), _cf);
+            impl_overlap<<<32, 32, 1>>>(map.to_view(), buckets.to_view(), nodes.to_view(), _boxes.to_view(), res.to_view(), _cf);
         }
 
         cudaDeviceSynchronize();

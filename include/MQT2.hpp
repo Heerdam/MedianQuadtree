@@ -1,7 +1,6 @@
 #pragma once
 
 #include <vector>
-#include <array>
 #include <memory>
 #include <queue>
 #include <algorithm>
@@ -23,7 +22,16 @@
 
 namespace MQT2 {
 
-    using Vec2 = std::array<int32_t, 2>;
+    struct CVec2 {
+        int32_t v_[2];
+
+        template<class T>
+        [[nodiscard]] int32_t operator[](const T _i) const { return v_[_i]; }
+
+        template<class T>
+        [[nodiscard]] int32_t& operator[](const T _i) { return v_[_i]; }
+
+    };//CVec2
 
     //----------------------------------
 #ifdef UCUDA
@@ -46,6 +54,15 @@ namespace MQT2 {
             [[nodiscard]] const auto& data() const { return data_; }
             [[nodiscard]] bool isDone() const;
         };//Promise
+
+        struct CostResult {
+            int32_t n0_, n1_, height_; //position on grid
+            int32_t h_, m_, l_; //interior
+            int32_t bh_, bm_, bl_; //border
+            int32_t oX_, oY_, oZ_; //original bounds of the kernel
+            int32_t x_, y_, z_; //permutated bounds of kernel
+            int32_t perm_; //permutation
+        };//Result
 
         extern "C" {
 
@@ -81,8 +98,8 @@ namespace MQT2 {
         template<class T, class ALLOCATOR = std::allocator<T>>
         [[nodiscard]] inline std::tuple<int32_t, int32_t, int32_t> naive_tester(
         const std::vector<T, ALLOCATOR>& _map,
-        const Vec2& _min,
-        const Vec2& _max,
+        const CVec2& _min,
+        const CVec2& _max,
         const int32_t _N,
         const T _h
         ) noexcept {
@@ -102,8 +119,8 @@ namespace MQT2 {
         template<class T, class ALLOCATOR = std::allocator<T>>
         [[nodiscard]] inline std::tuple<int32_t, int32_t, int32_t> naive_border_tester(
         const std::vector<T, ALLOCATOR>& _map,
-        const Vec2& _min,
-        const Vec2& _max,
+        const CVec2& _min,
+        const CVec2& _max,
         const int32_t _N,
         const T _h
         ) noexcept {
@@ -147,21 +164,21 @@ namespace MQT2 {
             int32_t idx_;
             int32_t level_;
             //------------------
-            Vec2 bmin_, bmax_;
+            CVec2 bmin_, bmax_;
             //------------------
             bool isMonoton_;
             bool isFlat_;
             //------------------
             Detail::var_type_t<T> median_;
             //------------------
-            std::array<T, SIZE * SIZE> vals_;
+            T vals_ [SIZE * SIZE];
             //----------------
             Bucket() = default;
             Bucket(
                 const int32_t _idx,
                 const int32_t _level,
-                const Vec2& _bmin,
-                const Vec2& _bmax              
+                const CVec2& _bmin,
+                const CVec2& _bmax              
             ) :  idx_(_idx), level_(_level), bmin_(_bmin), bmax_(_bmax) {}
             //----------------
             Bucket(Bucket&&) = default;
@@ -175,7 +192,7 @@ namespace MQT2 {
 
         template<class T, int32_t SIZE>
         struct Node {
-            Vec2 bmin_, bmax_;
+            CVec2 bmin_, bmax_;
             T max_, min_;
             bool isFlat_;
             //----------------
@@ -220,8 +237,8 @@ namespace MQT2 {
         void impl_print(const Detail::Bucket<T, SIZE>& _bucket) const;
 
         std::tuple<int32_t, int32_t, int32_t> impl_overlap(
-            const Vec2& _min,
-            const Vec2& _max,
+            const CVec2& _min,
+            const CVec2& _max,
             const T _h,
             const int32_t _idx, 
             const int32_t _level, 
@@ -229,8 +246,8 @@ namespace MQT2 {
         ) const;
         
         std::tuple<int32_t, int32_t, int32_t> impl_overlap(
-            const Vec2& _min,
-            const Vec2& _max,
+            const CVec2& _min,
+            const CVec2& _max,
             const T _h,
             const Detail::Bucket<T, SIZE>& _bucket
         ) const;
@@ -255,11 +272,11 @@ namespace MQT2 {
         //----------------
         //[min, max)
         [[nodiscard]] std::tuple<int32_t, int32_t, int32_t> 
-        check_overlap(const Vec2& _min, const Vec2& _max, const T _h) const noexcept;
+        check_overlap(const CVec2& _min, const CVec2& _max, const T _h) const noexcept;
 
         //[min, max)
         [[nodiscard]] std::tuple<int32_t, int32_t, int32_t> 
-        check_border_overlap(const Vec2& _min, const Vec2& _max, const T _h) const noexcept;
+        check_border_overlap(const CVec2& _min, const CVec2& _max, const T _h) const noexcept;
         //----------------
         void print_debug() const;
     };//MedianQuadTree
@@ -326,29 +343,29 @@ MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::MedianQuadTree(
             b_[k] = Bucket<T, SIZE>( 
                 i + j * bc,
                 max_level_,
-                Vec2{i * BUCKET_SIZE, j * BUCKET_SIZE},
-                Vec2{i * BUCKET_SIZE + BUCKET_SIZE, j * BUCKET_SIZE + BUCKET_SIZE}
+                CVec2{i * BUCKET_SIZE, j * BUCKET_SIZE},
+                CVec2{i * BUCKET_SIZE + BUCKET_SIZE, j * BUCKET_SIZE + BUCKET_SIZE}
             );
             k++;
             b_[k] = Bucket<T, SIZE>( 
                 (i + 1) + j * bc,
                 max_level_,
-                Vec2{(i + 1) * BUCKET_SIZE, j * BUCKET_SIZE},
-                Vec2{(i + 1) * BUCKET_SIZE + BUCKET_SIZE, j * BUCKET_SIZE + BUCKET_SIZE}
+                CVec2{(i + 1) * BUCKET_SIZE, j * BUCKET_SIZE},
+                CVec2{(i + 1) * BUCKET_SIZE + BUCKET_SIZE, j * BUCKET_SIZE + BUCKET_SIZE}
             );
             k++;
             b_[k] = Bucket<T, SIZE>( 
                 i + (j + 1) * bc,
                 max_level_,
-                Vec2{i * BUCKET_SIZE, (j + 1) * BUCKET_SIZE},
-                Vec2{i * BUCKET_SIZE + BUCKET_SIZE, (j + 1) * BUCKET_SIZE + BUCKET_SIZE}
+                CVec2{i * BUCKET_SIZE, (j + 1) * BUCKET_SIZE},
+                CVec2{i * BUCKET_SIZE + BUCKET_SIZE, (j + 1) * BUCKET_SIZE + BUCKET_SIZE}
             );
             k++;
             b_[k] = Bucket<T, SIZE>( 
                 (i + 1) + (j + 1) * bc,
                 max_level_,
-                Vec2{(i + 1) * BUCKET_SIZE, (j + 1) * BUCKET_SIZE},
-                Vec2{(i + 1) * BUCKET_SIZE + BUCKET_SIZE, (j + 1) * BUCKET_SIZE + BUCKET_SIZE}
+                CVec2{(i + 1) * BUCKET_SIZE, (j + 1) * BUCKET_SIZE},
+                CVec2{(i + 1) * BUCKET_SIZE + BUCKET_SIZE, (j + 1) * BUCKET_SIZE + BUCKET_SIZE}
             );
             k++;
         }
@@ -368,12 +385,12 @@ void MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::recompute(const std::vector<bool>
 }//MQT2::MedianQuadTree::recompute
 
 template<class T, int32_t SIZE, class ALLOCATOR>
-std::tuple<int32_t, int32_t, int32_t> MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::check_overlap(const Vec2& _min, const Vec2& _max, const T _h) const noexcept {
+std::tuple<int32_t, int32_t, int32_t> MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::check_overlap(const CVec2& _min, const CVec2& _max, const T _h) const noexcept {
     return impl_overlap(_min, _max, _h, 0, 1, n_[0]);
 }//MQT2::MedianQuadTree::check_overlap
 
 template<class T, int32_t SIZE, class ALLOCATOR>
-std::tuple<int32_t, int32_t, int32_t> MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::check_border_overlap(const Vec2& _min, const Vec2& _max, const T _h) const noexcept {
+std::tuple<int32_t, int32_t, int32_t> MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::check_border_overlap(const CVec2& _min, const CVec2& _max, const T _h) const noexcept {
     return Detail::naive_border_tester<T>(map_, _min, _max, N_, _h);
 }//MQT2::MedianQuadTree::check_border_overlap
 
@@ -385,6 +402,8 @@ void MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::impl_recompute(
     const std::vector<bool>& _m
 ) {
     using namespace Detail;
+
+    constexpr int32_t BACK = SIZE * SIZE - 1;
 
     if(_level + 1 == max_level_){
         constexpr double frac1 = 1./3.;
@@ -401,8 +420,8 @@ void MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::impl_recompute(
         impl_recompute(b_[c3], _m);
         impl_recompute(b_[c4], _m);
 
-        _n.min_ = std::min(b_[c1].vals_.front(), std::min(b_[c2].vals_.front(), std::min(b_[c3].vals_.front(), b_[c4].vals_.front())));
-        _n.max_ = std::max(b_[c1].vals_.back(), std::max(b_[c2].vals_.back(), std::max(b_[c3].vals_.back(), b_[c4].vals_.back())));
+        _n.min_ = std::min(b_[c1].vals_[0], std::min(b_[c2].vals_[0], std::min(b_[c3].vals_[0], b_[c4].vals_[0])));
+        _n.max_ = std::max(b_[c1].vals_[BACK], std::max(b_[c2].vals_[BACK], std::max(b_[c3].vals_[BACK], b_[c4].vals_[BACK])));
         _n.isFlat_ = isEqual(_n.min_, _n.max_);
 
         _n.bmin_[0] = std::min(b_[c1].bmin_[0], std::min(b_[c2].bmin_[0], std::min(b_[c3].bmin_[0], b_[c4].bmin_[0])));
@@ -444,6 +463,8 @@ void MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::impl_recompute(Detail::Bucket<T, 
 
     if(!_m[_b.idx_]) return;
 
+    constexpr int32_t BACK = SIZE * SIZE - 1;
+
     int32_t k = 0;
     for (int32_t n0 = _b.bmin_[0]; n0 < _b.bmax_[0]; ++n0) {
         for (int32_t n1 = _b.bmin_[1]; n1 < _b.bmax_[1]; ++n1) {
@@ -453,13 +474,13 @@ void MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::impl_recompute(Detail::Bucket<T, 
         }
     }
 
-    std::sort(_b.vals_.begin(), _b.vals_.end(), [](const auto _e1, const auto _e2) {
+    std::sort(&_b.vals_[0], &_b.vals_[BACK], [](const auto _e1, const auto _e2) {
         return _e1 < _e2;
     });
 
-    _b.isFlat_ = isEqual<T>(_b.vals_.front(), _b.vals_.back());
+    _b.isFlat_ = isEqual<T>(_b.vals_[0], _b.vals_[BACK]);
     if(_b.isFlat_){
-        _b.median_ = Detail::var_type_t<T>(_b.vals_.back());
+        _b.median_ = Detail::var_type_t<T>(_b.vals_[BACK]);
         return;
     }
     
@@ -485,8 +506,8 @@ void MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::impl_recompute(Detail::Bucket<T, 
 
 template<class T, int32_t SIZE, class ALLOCATOR>
 std::tuple<int32_t, int32_t, int32_t> MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::impl_overlap(
-    const Vec2& _min,
-    const Vec2& _max,
+    const CVec2& _min,
+    const CVec2& _max,
     const T _h,
     const int32_t _idx, 
     const int32_t _level, 
@@ -561,8 +582,8 @@ std::tuple<int32_t, int32_t, int32_t> MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::
 
 template<class T, int32_t SIZE, class ALLOCATOR>
 std::tuple<int32_t, int32_t, int32_t> MQT2::MedianQuadTree<T, SIZE, ALLOCATOR>::impl_overlap(
-    const Vec2& _min,
-    const Vec2& _max,
+    const CVec2& _min,
+    const CVec2& _max,
     const T _h,
     const Detail::Bucket<T, SIZE>& _b
 ) const{
