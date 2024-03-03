@@ -4,13 +4,6 @@ cmake_minimum_required(VERSION 3.5)
 project(MQT2)
 project(MQT2 LANGUAGES CXX)
 
-set(USE_CUDA on)
-
-if(USE_CUDA)
-	enable_language(CUDA)
-	add_definitions(-DUCUDA=1)
-endif()
-
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -26,20 +19,11 @@ endif()
 
 add_library( MQT2 INTERFACE )
 
-if(USE_CUDA)
-	add_executable(mqttest
-		src/main.cpp
-		src/MQT2.cu
-	)
-else()
-	add_executable(mqttest
-		src/main.cpp
-	)
-endif()
+add_executable(mqttest
+	src/main.cpp
+)
 
 #-ffast-math
-
-set_target_properties(mqttest PROPERTIES CUDA_ARCHITECTURES "61")
 
 target_include_directories(MQT2 INTERFACE include )
 target_include_directories(mqttest PUBLIC include )
