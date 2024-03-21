@@ -30,15 +30,18 @@ void MQT2_tester_float() {
     // }
     // std::cout << std::endl;
 
+    
+
     {
-        MedianQuadTree<double, 10> tree(map, 40);
+        using BT = uint16_t;
+        MedianQuadTree<double, BT, 10> tree(map, 40);
         //std::cout << tree << std::endl;
         std::cout << "----- Tree single box (double) -----" << std::endl;
 
         //full overlap
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{0, 0}, Vec2{40, 40}, 1.);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double>(map, Vec2{0, 0}, Vec2{40, 40}, 40, 1.);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{0, 0}, Vec2<BT>{40, 40}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double, BT>(map, Vec2<BT>{0, 0}, Vec2<BT>{40, 40}, 40, 1.);
             std::cout << "Test 1: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
@@ -47,8 +50,8 @@ void MQT2_tester_float() {
 
         //mid
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{5, 5}, Vec2{35, 35}, 1.);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double>(map, Vec2{5, 5}, Vec2{35, 35}, 40, 1.);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{5, 5}, Vec2<BT>{35, 35}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double, BT>(map, Vec2<BT>{5, 5}, Vec2<BT>{35, 35}, 40, 1.);
             std::cout << "Test 2: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
@@ -70,48 +73,48 @@ void MQT2_tester_float() {
 
         //partial
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{0, 0}, Vec2{10, 10}, 1.);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double>(map, Vec2{0, 0}, Vec2{10, 10}, 40, 1.);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{0, 0}, Vec2<BT>{10, 10}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double, BT>(map, Vec2<BT>{0, 0}, Vec2<BT>{10, 10}, 40, 1.);
             std::cout << "Test 3: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
             std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
         }
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{10, 0}, Vec2{25, 10}, 1.);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double>(map, Vec2{10, 0}, Vec2{25, 10}, 40, 1.);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{10, 0}, Vec2<BT>{25, 10}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double, BT>(map, Vec2<BT>{10, 0}, Vec2<BT>{25, 10}, 40, 1.);
             std::cout << "Test 4: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
             std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
         }
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{0, 10}, Vec2{10, 25}, 1.);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double>(map, Vec2{0, 10}, Vec2{10, 25}, 40, 1.);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{0, 10}, Vec2<BT>{10, 25}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double, BT>(map, Vec2<BT>{0, 10}, Vec2<BT>{10, 25}, 40, 1.);
             std::cout << "Test 5: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
             std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;        
         }
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{10, 10}, Vec2{25, 25}, 1.);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double>(map, Vec2{10, 10}, Vec2{25, 25}, 40, 1.);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{10, 10}, Vec2<BT>{25, 25}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double, BT>(map, Vec2<BT>{10, 10}, Vec2<BT>{25, 25}, 40, 1.);
             std::cout << "Test 6: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
             std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
         }
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{0, 0}, Vec2{10, 25}, 1.);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double>(map, Vec2{0, 0}, Vec2{10, 25}, 40, 1.);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{0, 0}, Vec2<BT>{10, 25}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double, BT>(map, Vec2<BT>{0, 0}, Vec2<BT>{10, 25}, 40, 1.);
             std::cout << "Test 7: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
             std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
         }
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{0, 5}, Vec2{12, 17}, 1.);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double>(map, Vec2{0, 5}, Vec2{12, 17}, 40, 1.);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{0, 5}, Vec2<BT>{12, 17}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double, BT>(map, Vec2<BT>{0, 5}, Vec2<BT>{12, 17}, 40, 1.);
             std::cout << "Test 8: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
@@ -127,14 +130,15 @@ void MQT2_tester_float() {
     }
 
     {
-        MedianQuadTree<double, 10> tree(map, 40);
+        using BT = uint16_t;
+        MedianQuadTree<double, BT, 10> tree(map, 40);
         //std::cout << tree << std::endl;
         std::cout << "----- Tree checker (double) -----" << std::endl;
 
         //full overlap
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{0, 0}, Vec2{20, 20}, 1.);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double>(map, Vec2{0, 0}, Vec2{20, 20}, 40, 1.);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{0, 0}, Vec2<BT>{20, 20}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double, BT>(map, Vec2<BT>{0, 0}, Vec2<BT>{20, 20}, 40, 1.);
             std::cout << "Test 1: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
@@ -143,8 +147,8 @@ void MQT2_tester_float() {
 
         //mid
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{5, 5}, Vec2{15, 15}, 1.);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double>(map, Vec2{5, 5}, Vec2{15, 15}, 40, 1.);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{5, 5}, Vec2<BT>{15, 15}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double, BT>(map, Vec2<BT>{5, 5}, Vec2<BT>{15, 15}, 40, 1.);
             std::cout << "Test 2: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
@@ -153,48 +157,48 @@ void MQT2_tester_float() {
 
         //partial
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{0, 0}, Vec2{10, 10}, 1.);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double>(map, Vec2{0, 0}, Vec2{10, 10}, 40, 1.);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{0, 0}, Vec2<BT>{10, 10}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double, BT>(map, Vec2<BT>{0, 0}, Vec2<BT>{10, 10}, 40, 1.);
             std::cout << "Test 3: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
             std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
         }
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{10, 0}, Vec2{25, 10}, 1.);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double>(map, Vec2{10, 0}, Vec2{25, 10}, 40, 1.);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{10, 0}, Vec2<BT>{25, 10}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double, BT>(map, Vec2<BT>{10, 0}, Vec2<BT>{25, 10}, 40, 1.);
             std::cout << "Test 4: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
             std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
         }
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{0, 10}, Vec2{10, 25}, 1.);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double>(map, Vec2{0, 10}, Vec2{10, 25}, 40, 1.);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{0, 10}, Vec2<BT>{10, 25}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double, BT>(map, Vec2<BT>{0, 10}, Vec2<BT>{10, 25}, 40, 1.);
             std::cout << "Test 5: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
             std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
         }
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{10, 10}, Vec2{25, 25}, 1.);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double>(map, Vec2{10, 10}, Vec2{25, 25}, 40, 1.);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{10, 10}, Vec2<BT>{25, 25}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double, BT>(map, Vec2<BT>{10, 10}, Vec2<BT>{25, 25}, 40, 1.);
             std::cout << "Test 6: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
             std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
         }
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{0, 0}, Vec2{10, 25}, 1.);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double>(map, Vec2{0, 0}, Vec2{10, 25}, 40, 1.);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{0, 0}, Vec2<BT>{10, 25}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double, BT>(map, Vec2<BT>{0, 0}, Vec2<BT>{10, 25}, 40, 1.);
             std::cout << "Test 7: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
             std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
         }
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{0, 5}, Vec2{12, 17}, 1.);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double>(map, Vec2{0, 5}, Vec2{12, 17}, 40, 1.);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{0, 5}, Vec2<BT>{12, 17}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double, BT>(map, Vec2<BT>{0, 5}, Vec2<BT>{12, 17}, 40, 1.);
             std::cout << "Test 8: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
@@ -205,11 +209,12 @@ void MQT2_tester_float() {
     //-------------------------------
 
     {
+        using BT = uint32_t;
         constexpr uint32_t size = 10*2*2;
         map.resize(size*size);
         std::fill(map.begin(), map.end(), 0.);
 
-        MedianQuadTree<double, 10>tree1(map, size);
+        MedianQuadTree<double, BT, 10>tree1(map, size);
 
         std::cout << "Tree size 10 (double)" << std::endl;
 
@@ -261,14 +266,14 @@ void MQT2_tester_float() {
 
             {
 
-                const uint32_t width = Dist(size/4, size/2 - 2)(rnd) - 1;
-                const uint32_t height = Dist(size/4, size/2 - 2)(rnd) - 1;
-                const uint32_t n0 = Dist(width + 1, size - width - 1)(rnd);
-                const uint32_t n1 = Dist(height + 1, size - height - 1)(rnd);
+                const BT width = Dist(size/4, size/2 - 2)(rnd) - 1;
+                const BT height = Dist(size/4, size/2 - 2)(rnd) - 1;
+                const BT n0 = Dist(width + 1, size - width - 1)(rnd);
+                const BT n1 = Dist(height + 1, size - height - 1)(rnd);
                 const double h = std::round(DistD(10., 200.)(rnd));
                 
-                const auto[l1, m1, h1] = tree1.check_overlap(Vec2{n0 - width, n1 - height}, Vec2{n0 + width, n1 + height}, h);
-                const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double>(map, Vec2{n0 - width, n1 - height}, Vec2{n0 + width, n1 + height}, size, h);
+                const auto[l1, m1, h1] = tree1.check_overlap(Vec2<BT>{BT(n0 - width), BT(n1 - height)}, Vec2<BT>{BT(n0 + width), BT(n1 + height)}, h);
+                const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double, BT>(map, Vec2<BT>{BT(n0 - width), BT(n1 - height)}, Vec2<BT>{BT(n0 + width), BT(n1 + height)}, size, h);
 
                 if(l1 == l2 && m1 == m2 && h1 == h2) suc++;
                 else{
@@ -320,10 +325,11 @@ void MQT2_tester_float() {
     }
 
     {
+        using BT = uint32_t;
         map.resize(6400*6400);
         std::fill(map.begin(), map.end(), 0.);
 
-        MedianQuadTree<double, 25>tree1(map, 6400);
+        MedianQuadTree<double, BT, 25>tree1(map, 6400);
 
         std::cout << "Tree size 25 (double)" << std::endl;
 
@@ -347,11 +353,11 @@ void MQT2_tester_float() {
         for(uint32_t k = 0; k < 100; ++k){
 
             {
-                const uint32_t width = Dist(10, 500)(rnd) - 1;
-                const uint32_t height = Dist(10, 500)(rnd) - 1;
-                const uint32_t xmin = Dist(0, 6400 - width - 1)(rnd);
-                const uint32_t ymin = Dist(0, 6400 - height - 1)(rnd);
-                const uint32_t h = std::round(Dist(10., 200.)(rnd));
+                const BT width = Dist(10, 500)(rnd) - 1;
+                const BT height = Dist(10, 500)(rnd) - 1;
+                const BT xmin = Dist(0, 6400 - width - 1)(rnd);
+                const BT ymin = Dist(0, 6400 - height - 1)(rnd);
+                const BT h = std::round(Dist(10., 200.)(rnd));
 
                 for(uint32_t n0 = ymin; n0 <= ymin + height; ++n0){
                     for(uint32_t n1 = xmin; n1 <= xmin + width; ++n1){
@@ -383,8 +389,8 @@ void MQT2_tester_float() {
                 const uint32_t n1 = Dist(height + 1, 6400 - height - 1)(rnd);
                 const uint32_t h = std::round(Dist(10., 200.)(rnd));
 
-                const auto[l1, m1, h1] = tree1.check_overlap(Vec2{n0 - width, n1 - height}, Vec2{n0 + width, n1 + height}, h);
-                const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double>(map, Vec2{n0 - width, n1 - height}, Vec2{n0 + width, n1 + height}, 6400, h);
+                const auto[l1, m1, h1] = tree1.check_overlap(Vec2<BT>{n0 - width, n1 - height}, Vec2<BT>{n0 + width, n1 + height}, h);
+                const auto[l2, m2, h2] = MQT2::Detail::naive_tester<double>(map, Vec2<BT>{n0 - width, n1 - height}, Vec2<BT>{n0 + width, n1 + height}, 6400, h);
 
                 if(l1 == l2 && m1 == m2 && h1 == h2) suc++;
                 else{
@@ -436,7 +442,8 @@ void MQT2_tester_int() {
     // std::cout << std::endl;
 
     {
-        MedianQuadTree<uint32_t, 10> tree(map, 40);
+        using BT = uint16_t;
+        MedianQuadTree<uint32_t, BT, 10> tree(map, 40);
         //tree.print_debug();
         //return;
 
@@ -445,8 +452,8 @@ void MQT2_tester_int() {
 
         //full overlap
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{0, 0}, Vec2{40, 40}, 1);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t>(map, Vec2{0, 0}, Vec2{40, 40}, 40, 1);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{0, 0}, Vec2<BT>{40, 40}, 1);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t, BT>(map, Vec2<BT>{0, 0}, Vec2<BT>{40, 40}, 40, 1);
             std::cout << "Test 1: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
@@ -455,8 +462,8 @@ void MQT2_tester_int() {
 
         //mid
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{5, 5}, Vec2{35, 35}, 1.);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t>(map, Vec2{5, 5}, Vec2{35, 35}, 40, 1);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{5, 5}, Vec2<BT>{35, 35}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t, BT>(map, Vec2<BT>{5, 5}, Vec2<BT>{35, 35}, 40, 1);
             std::cout << "Test 2: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
@@ -478,48 +485,48 @@ void MQT2_tester_int() {
 
         //partial
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{0, 0}, Vec2{10, 10}, 1.);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t>(map, Vec2{0, 0}, Vec2{10, 10}, 40, 1);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{0, 0}, Vec2<BT>{10, 10}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t, BT>(map, Vec2<BT>{0, 0}, Vec2<BT>{10, 10}, 40, 1);
             std::cout << "Test 3: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
             std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
         }
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{10, 0}, Vec2{25, 10}, 1.);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t>(map, Vec2{10, 0}, Vec2{25, 10}, 40, 1);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{10, 0}, Vec2<BT>{25, 10}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t, BT>(map, Vec2<BT>{10, 0}, Vec2<BT>{25, 10}, 40, 1);
             std::cout << "Test 4: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
             std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
         }
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{0, 10}, Vec2{10, 25}, 1.);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t>(map, Vec2{0, 10}, Vec2{10, 25}, 40, 1);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{0, 10}, Vec2<BT>{10, 25}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t, BT>(map, Vec2<BT>{0, 10}, Vec2<BT>{10, 25}, 40, 1);
             std::cout << "Test 5: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
             std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;        
         }
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{10, 10}, Vec2{25, 25}, 1.);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t>(map, Vec2{10, 10}, Vec2{25, 25}, 40, 1);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{10, 10}, Vec2<BT>{25, 25}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t, BT>(map, Vec2<BT>{10, 10}, Vec2<BT>{25, 25}, 40, 1);
             std::cout << "Test 6: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
             std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
         }
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{0, 0}, Vec2{10, 25}, 1.);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t>(map, Vec2{0, 0}, Vec2{10, 25}, 40, 1);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{0, 0}, Vec2<BT>{10, 25}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t, BT>(map, Vec2<BT>{0, 0}, Vec2<BT>{10, 25}, 40, 1);
             std::cout << "Test 7: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
             std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
         }
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{0, 5}, Vec2{12, 17}, 1.);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t>(map, Vec2{0, 5}, Vec2{12, 17}, 40, 1);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{0, 5}, Vec2<BT>{12, 17}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t, BT>(map, Vec2<BT>{0, 5}, Vec2<BT>{12, 17}, 40, 1);
             std::cout << "Test 8: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
@@ -536,14 +543,15 @@ void MQT2_tester_int() {
     }
 
     {
-        MedianQuadTree<uint32_t, 10> tree(map, 40);
+        using BT = uint16_t;
+        MedianQuadTree<uint32_t, BT, 10> tree(map, 40);
         //std::cout << tree << std::endl;
         std::cout << "----- Tree checker (int) -----" << std::endl;
 
         //full overlap
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{0, 0}, Vec2{20, 20}, 1.);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t>(map, Vec2{0, 0}, Vec2{20, 20}, 40, 1);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{0, 0}, Vec2<BT>{20, 20}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t, BT>(map, Vec2<BT>{0, 0}, Vec2<BT>{20, 20}, 40, 1);
             std::cout << "Test 1: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
@@ -552,8 +560,8 @@ void MQT2_tester_int() {
 
         //mid
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{5, 5}, Vec2{15, 15}, 1.);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t>(map, Vec2{5, 5}, Vec2{15, 15}, 40, 1);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{5, 5}, Vec2<BT>{15, 15}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t, BT>(map, Vec2<BT>{5, 5}, Vec2<BT>{15, 15}, 40, 1);
             std::cout << "Test 2: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
@@ -562,48 +570,48 @@ void MQT2_tester_int() {
 
         //partial
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{0, 0}, Vec2{10, 10}, 1.);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t>(map, Vec2{0, 0}, Vec2{10, 10}, 40, 1);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{0, 0}, Vec2<BT>{10, 10}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t, BT>(map, Vec2<BT>{0, 0}, Vec2<BT>{10, 10}, 40, 1);
             std::cout << "Test 3: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
             std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
         }
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{10, 0}, Vec2{25, 10}, 1.);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t>(map, Vec2{10, 0}, Vec2{25, 10}, 40, 1);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{10, 0}, Vec2<BT>{25, 10}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t, BT>(map, Vec2<BT>{10, 0}, Vec2<BT>{25, 10}, 40, 1);
             std::cout << "Test 4: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
             std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
         }
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{0, 10}, Vec2{10, 25}, 1.);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t>(map, Vec2{0, 10}, Vec2{10, 25}, 40, 1);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{0, 10}, Vec2<BT>{10, 25}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t, BT>(map, Vec2<BT>{0, 10}, Vec2<BT>{10, 25}, 40, 1);
             std::cout << "Test 5: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
             std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
         }
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{10, 10}, Vec2{25, 25}, 1.);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t>(map, Vec2{10, 10}, Vec2{25, 25}, 40, 1);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{10, 10}, Vec2<BT>{25, 25}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t, BT>(map, Vec2<BT>{10, 10}, Vec2<BT>{25, 25}, 40, 1);
             std::cout << "Test 6: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
             std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
         }
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{0, 0}, Vec2{10, 25}, 1.);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t>(map, Vec2{0, 0}, Vec2{10, 25}, 40, 1);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{0, 0}, Vec2<BT>{10, 25}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t, BT>(map, Vec2<BT>{0, 0}, Vec2<BT>{10, 25}, 40, 1);
             std::cout << "Test 7: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
             std::cout << (l1 == l2 && m1 == m2 && h1 == h2 ? " passed" : " failed") << std::endl;
         }
         if constexpr(true){
-            const auto[l1, m1, h1] = tree.check_overlap(Vec2{0, 5}, Vec2{12, 17}, 1.);
-            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t>(map, Vec2{0, 5}, Vec2{12, 17}, 40, 1);
+            const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{0, 5}, Vec2<BT>{12, 17}, 1.);
+            const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t, BT>(map, Vec2<BT>{0, 5}, Vec2<BT>{12, 17}, 40, 1);
             std::cout << "Test 8: ";
             std::cout << " Res: " << l1 << ", " << m1 << ", " << h1;
             std::cout << " Ex: " << l2 << ", " << m2 << ", " << h2;
@@ -614,11 +622,12 @@ void MQT2_tester_int() {
     //-------------------------------
 
     {
+        using BT = uint32_t;
         constexpr uint32_t size = 10*2*2*2*2*2*2*2;
         map.resize(size*size);
         std::fill(map.begin(), map.end(), 0);
 
-        MedianQuadTree<uint32_t, 10>tree1(map, size);
+        MedianQuadTree<uint32_t, BT, 10>tree1(map, size);
 
         std::cout << "Tree size 10 (int)" << std::endl;
 
@@ -678,8 +687,8 @@ void MQT2_tester_int() {
                 const uint32_t n1 = Dist(height + 1, size - height - 1)(rnd);
                 const double h = std::round(Dist(10., 200.)(rnd));
                 //if(k != 34) continue;
-                const auto[l1, m1, h1] = tree1.check_overlap(Vec2{n0 - width, n1 - height}, Vec2{n0 + width, n1 + height}, h);
-                const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t>(map, Vec2{n0 - width, n1 - height}, Vec2{n0 + width, n1 + height}, size, h);
+                const auto[l1, m1, h1] = tree1.check_overlap(Vec2<BT>{n0 - width, n1 - height}, Vec2<BT>{n0 + width, n1 + height}, h);
+                const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t>(map, Vec2<BT>{n0 - width, n1 - height}, Vec2<BT>{n0 + width, n1 + height}, size, h);
 
                 if(l1 == l2 && m1 == m2 && h1 == h2) suc++;
                 else{
@@ -730,10 +739,11 @@ void MQT2_tester_int() {
     }
 
     {
+        using BT = uint32_t;
         map.resize(6400*6400);
         std::fill(map.begin(), map.end(), 0);
 
-        MedianQuadTree<uint32_t, 25>tree1(map, 6400);
+        MedianQuadTree<uint32_t, BT, 25>tree1(map, 6400);
 
         std::cout << "Tree size 25 (int)" << std::endl;
 
@@ -792,8 +802,8 @@ void MQT2_tester_int() {
                 const uint32_t n1 = Dist(height + 1, 6400 - height - 1)(rnd);
                 const uint32_t h = std::round(Dist(10., 200.)(rnd));
 
-                const auto[l1, m1, h1] = tree1.check_overlap(Vec2{n0 - width, n1 - height}, Vec2{n0 + width, n1 + height}, h);
-                const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t>(map, Vec2{n0 - width, n1 - height}, Vec2{n0 + width, n1 + height}, 6400, h);
+                const auto[l1, m1, h1] = tree1.check_overlap(Vec2<BT>{n0 - width, n1 - height}, Vec2<BT>{n0 + width, n1 + height}, h);
+                const auto[l2, m2, h2] = MQT2::Detail::naive_tester<uint32_t>(map, Vec2<BT>{n0 - width, n1 - height}, Vec2<BT>{n0 + width, n1 + height}, 6400, h);
 
                 if(l1 == l2 && m1 == m2 && h1 == h2) suc++;
                 else{
@@ -828,7 +838,7 @@ void bench_tree2() {
     std::cout << seed << std::endl;
     std::mt19937_64 rand(seed);
 
-    using SCALAR = float;
+    using SCALAR = uint16_t;
 
     std::vector<SCALAR> map;
     // map.resize(1000 * 1000);
@@ -844,7 +854,7 @@ void bench_tree2() {
     //     MedianQuadTree<double> tree(map, 1000, 1000, 100, 5 * i);
 
     //     const auto start = std::chrono::high_resolution_clock::now();
-    //     const auto[l, m, h] = tree.check_overlap(Vec2{250, 200}, Vec2{750, 700}, 1.);
+    //     const auto[l, m, h] = tree.check_overlap(Vec2<BT>{250, 200}, Vec2<BT>{750, 700}, 1.);
     //     const std::chrono::duration<double> ee = std::chrono::high_resolution_clock::now() - start;
     //     std::cout << i << " - " << ee.count() << std::endl;
     //     t += l;
@@ -894,14 +904,15 @@ void bench_tree2() {
     {
         file << "tree 1" << std::endl;
         {
-            MedianQuadTree<SCALAR, 15> tree(map, 7680);
+            using BT = uint32_t;
+            MedianQuadTree<SCALAR, BT, 15> tree(map, 7680);
 
             for(uint32_t i = 1; i < 50; ++i){
 
                 double tmp = 0.;
                 for(uint32_t j = 0; j < 12; ++j){
                     const auto start = std::chrono::high_resolution_clock::now();
-                    const auto[l1, m1, h1] = tree.check_overlap(Vec2{i * 50, i * 50}, Vec2{7680 - i * 50, 7680 - i * 50}, hh);
+                    const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{i * 50, i * 50}, Vec2<BT>{7680 - i * 50, 7680 - i * 50}, hh);
                     const std::chrono::duration<double> ee = std::chrono::high_resolution_clock::now() - start;          
                     tmp += ee.count();
                     t += l1;
@@ -922,7 +933,7 @@ void bench_tree2() {
         //         double tmp = 0.;
         //         for(uint32_t j = 0; j < 12; ++j){
         //             const auto start = std::chrono::high_resolution_clock::now();
-        //             const auto[l1, m1, h1] = tree.check_overlap(Vec2{i * 50, i * 50}, Vec2{7680 - i * 50, 7680 - i * 50}, hh);
+        //             const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{i * 50, i * 50}, Vec2<BT>{7680 - i * 50, 7680 - i * 50}, hh);
         //             const std::chrono::duration<double> ee = std::chrono::high_resolution_clock::now() - start;          
         //             tmp += ee.count();
         //             t += l1;
@@ -934,6 +945,7 @@ void bench_tree2() {
         // }
 
         if constexpr(true){
+            using BT = uint32_t;
             file << std::endl;
             file << "naive 1" << std::endl;
             for(uint32_t i = 1; i < 50; ++i){
@@ -941,7 +953,7 @@ void bench_tree2() {
                 double tmp = 0.;
                 for(uint32_t j = 0; j < 12; ++j){
                     const auto start = std::chrono::high_resolution_clock::now();
-                    const auto[l2, m2, h2] = MQT2::Detail::naive_tester<SCALAR>(map, Vec2{i * 50, i * 50}, Vec2{7680 - i * 50, 7680 - i * 50}, 7680, hh);
+                    const auto[l2, m2, h2] = MQT2::Detail::naive_tester<SCALAR, BT>(map, Vec2<BT>{BT(i * 50), BT(i * 50)}, Vec2<BT>{7680 - i * 50, 7680 - i * 50}, 7680, hh);
 
                     const std::chrono::duration<double> ee = std::chrono::high_resolution_clock::now() - start;
                     tmp += ee.count();
@@ -1013,14 +1025,15 @@ void bench_border_tree2() {
     {
         file << "tree 1" << std::endl;
         {
-            MedianQuadTree<SCALAR, 15> tree(map, 7680);
+            using BT = uint32_t;
+            MedianQuadTree<SCALAR, BT, 15> tree(map, 7680);
 
             for(uint32_t i = 1; i < 50; ++i){
 
                 double tmp = 0.;
                 for(uint32_t j = 0; j < 12; ++j){
                     const auto start = std::chrono::high_resolution_clock::now();
-                    const auto[l1, m1, h1] = tree.check_border_overlap(Vec2{i * 50, i * 50}, Vec2{7680 - i * 50, 7680 - i * 50}, hh);
+                    const auto[l1, m1, h1] = tree.check_border_overlap(Vec2<BT>{i * 50, i * 50}, Vec2<BT>{7680 - i * 50, 7680 - i * 50}, hh);
                     const std::chrono::duration<double> ee = std::chrono::high_resolution_clock::now() - start;          
                     tmp += ee.count();
                     t += l1;
@@ -1100,16 +1113,15 @@ void depth_test() {
 int main() {
     //test_bucket_node();
     //bench_tree();
-    //bench_tree2();
+    bench_tree2();
     //bench_border_tree2();
     //morton_test();
-    MQT2_tester_float();
-    MQT2_tester_int();
+    //MQT2_tester_float();
+    //MQT2_tester_int();
 
     //idx_test();
 
     //depth_test();
-
 
     return 0;
 }
