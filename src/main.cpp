@@ -907,19 +907,25 @@ void bench_tree2() {
             using BT = uint32_t;
             MedianQuadTree<SCALAR, BT, 15> tree(map, 7680);
 
+            const int32_t runs = 1000;
             for(uint32_t i = 1; i < 50; ++i){
+                const int32_t runs = 1000;
+                for(uint32_t j = 0; j < runs; ++j){
+                    const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{i * 50, i * 50}, Vec2<BT>{7680 - i * 50, 7680 - i * 50}, hh);       
+                    t += l1;
+                }
+            }
 
+            for(uint32_t i = 1; i < 50; ++i){
                 double tmp = 0.;
-                for(uint32_t j = 0; j < 12; ++j){
+                for(uint32_t j = 0; j < runs; ++j){
                     const auto start = std::chrono::high_resolution_clock::now();
                     const auto[l1, m1, h1] = tree.check_overlap(Vec2<BT>{i * 50, i * 50}, Vec2<BT>{7680 - i * 50, 7680 - i * 50}, hh);
                     const std::chrono::duration<double> ee = std::chrono::high_resolution_clock::now() - start;          
                     tmp += ee.count();
                     t += l1;
                 }
-
-                file << tmp / 12. << std::endl;
-
+                file << tmp / double(runs) << std::endl;
             }
         }
 
@@ -944,7 +950,7 @@ void bench_tree2() {
         //     }
         // }
 
-        if constexpr(true){
+        if constexpr(false){
             using BT = uint32_t;
             file << std::endl;
             file << "naive 1" << std::endl;
