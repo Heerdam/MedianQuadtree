@@ -164,7 +164,7 @@ namespace MQT2 {
         struct Node {
             Vec2<B_T> bmin_, bmax_; //8
             T max_, min_; //4
-            uint16_t level_;
+            //uint16_t level_;
             uint8_t isFlat_ : 1; //1
             //----------------
             Node() = default;
@@ -214,8 +214,8 @@ namespace MQT2 {
         std::vector<Detail::Bucket<T, B_T, SIZE>> b_;
         std::vector<Detail::Node<T, B_T>> n_;
 
-        mutable Detail::LinearQueue<size_t> qn_;
-        mutable Detail::LinearQueue<size_t> qb_;
+        //mutable Detail::LinearQueue<size_t> qn_;
+        //mutable Detail::LinearQueue<size_t> qb_;
 
         //-----------------------
 
@@ -245,7 +245,7 @@ namespace MQT2 {
 
         //-----------------------
 
-        [[nodiscard]] [[deprecated]] Result impl_overlap(
+        [[nodiscard]] Result impl_overlap(
             const Vec2<B_T>& _min,
             const Vec2<B_T>& _max,
             const T _h,
@@ -263,11 +263,11 @@ namespace MQT2 {
 
         //-----------------------
         
-        [[nodiscard]] Result impl_overlap_it(
-            const Vec2<B_T>& _min,
-            const Vec2<B_T>& _max,
-            const T _h
-        ) const noexcept;
+        //[[nodiscard]] Result impl_overlap_it(
+        //    const Vec2<B_T>& _min,
+        //    const Vec2<B_T>& _max,
+        //    const T _h
+        //) const noexcept;
 
     public:
         constexpr static B_T BUCKET_SIZE = SIZE;
@@ -322,33 +322,33 @@ MQT2::MedianQuadTree<T, B_T, SIZE, ALLOCATOR>::MedianQuadTree(
     n_.resize(dc);
     b_.resize(bc * bc);
 
-    qn_.init(dc + 1);
-    qb_.init(bc * bc + 1);
+    //qn_.init(dc + 1);
+    //qb_.init(bc * bc + 1);
 
-    qn_.push(0);
-    n_[0].level_ = 1;
+    //qn_.push(0);
+    //n_[0].level_ = 1;
 
-    while(!qn_.isEmpty()){
-        const size_t idx = qn_.front();
-        qn_.pop();
+    // while(!qn_.isEmpty()){
+    //     const size_t idx = qn_.front();
+    //     qn_.pop();
 
-        if(n_[idx].level_ + 1 == max_level_) continue;
+    //     if(n_[idx].level_ + 1 == max_level_) continue;
 
-        const size_t c1 = 4 * idx + 1;
-        const size_t c2 = c1 + 1;
-        const size_t c3 = c2 + 1;
-        const size_t c4 = c3 + 1;
+    //     const size_t c1 = 4 * idx + 1;
+    //     const size_t c2 = c1 + 1;
+    //     const size_t c3 = c2 + 1;
+    //     const size_t c4 = c3 + 1;
 
-        n_[c1].level_ = n_[idx].level_ + 1;
-        n_[c2].level_ = n_[idx].level_ + 1;
-        n_[c3].level_ = n_[idx].level_ + 1;
-        n_[c4].level_ = n_[idx].level_ + 1; 
+    //     n_[c1].level_ = n_[idx].level_ + 1;
+    //     n_[c2].level_ = n_[idx].level_ + 1;
+    //     n_[c3].level_ = n_[idx].level_ + 1;
+    //     n_[c4].level_ = n_[idx].level_ + 1; 
 
-        qn_.push(c1);
-        qn_.push(c2);
-        qn_.push(c3);
-        qn_.push(c4);
-    }
+    //     qn_.push(c1);
+    //     qn_.push(c2);
+    //     qn_.push(c3);
+    //     qn_.push(c4);
+    // }
 
     size_t k = 0;
     for(B_T j = 0; j < bc; j+=2){
@@ -403,8 +403,8 @@ MQT2::Result MQT2::MedianQuadTree<T, B_T, SIZE, ALLOCATOR>::check_overlap(
     const Vec2<B_T>& _max, 
     const T _h
 ) const noexcept {
-    //return impl_overlap(_min, _max, _h, 0, 1, n_[0]);
-    return impl_overlap_it(_min, _max, _h);
+    return impl_overlap(_min, _max, _h, 0, 1, n_[0]);
+    //return impl_overlap_it(_min, _max, _h);
 }//MQT2::MedianQuadTree::check_overlap
 
 template<class T, class B_T, uint32_t SIZE, class ALLOCATOR>
@@ -525,101 +525,101 @@ void MQT2::MedianQuadTree<T, B_T, SIZE, ALLOCATOR>::impl_recompute(
 
 }//MQT2::MedianQuadTree::impl_recompute
 
-template<class T, class B_T, uint32_t SIZE, class ALLOCATOR>
-MQT2::Result MQT2::MedianQuadTree<T, B_T, SIZE, ALLOCATOR>::impl_overlap_it(
-    const Vec2<B_T>& _min,
-    const Vec2<B_T>& _max,
-    const T _h
-) const noexcept {
+// template<class T, class B_T, uint32_t SIZE, class ALLOCATOR>
+// MQT2::Result MQT2::MedianQuadTree<T, B_T, SIZE, ALLOCATOR>::impl_overlap_it(
+//     const Vec2<B_T>& _min,
+//     const Vec2<B_T>& _max,
+//     const T _h
+// ) const noexcept {
 
-    using namespace Detail;
+//     using namespace Detail;
 
-    qn_.reset();
-    qb_.reset();
+//     qn_.reset();
+//     qb_.reset();
     
-    uint32_t lo = 0, mo = 0, ho = 0;
+//     uint32_t lo = 0, mo = 0, ho = 0;
 
-    constexpr double frac1 = 1./3.;
-    constexpr double frac2 = 4./3.;
+//     constexpr double frac1 = 1./3.;
+//     constexpr double frac2 = 4./3.;
 
-    qn_.push(0);
+//     qn_.push(0);
 
-    while(!qn_.isEmpty()){
-        const size_t idx = qn_.front();
-        qn_.pop();
+//     while(!qn_.isEmpty()){
+//         const size_t idx = qn_.front();
+//         qn_.pop();
 
-        assert(idx < n_.size());
+//         assert(idx < n_.size());
 
-        const auto& n = n_[idx];
+//         const auto& n = n_[idx];
 
-        if(_max[0] < n.bmin_[0] || n.bmax_[0] < _min[0] || _max[1] < n.bmin_[1] || n.bmax_[1] < _min[1]) continue;
+//         if(_max[0] < n.bmin_[0] || n.bmax_[0] < _min[0] || _max[1] < n.bmin_[1] || n.bmax_[1] < _min[1]) continue;
     
-        const B_T min0 = std::max<B_T>(_min[0], n.bmin_[0]);
-        const B_T min1 = std::max<B_T>(_min[1], n.bmin_[1]);
+//         const B_T min0 = std::max<B_T>(_min[0], n.bmin_[0]);
+//         const B_T min1 = std::max<B_T>(_min[1], n.bmin_[1]);
 
-        const B_T max0 = std::min<B_T>(_max[0], n.bmax_[0]);
-        const B_T max1 = std::min<B_T>(_max[1], n.bmax_[1]);
+//         const B_T max0 = std::min<B_T>(_max[0], n.bmax_[0]);
+//         const B_T max1 = std::min<B_T>(_max[1], n.bmax_[1]);
 
-        const bool isPartial = !(min0 == n.bmin_[0] && min1 == n.bmin_[1] && max0 == n.bmax_[0] && max1 == n.bmax_[1]);
-        const bool isH = _h > n.max_;
-        const bool isM = isEqual<T>(n.max_, _h);
+//         const bool isPartial = !(min0 == n.bmin_[0] && min1 == n.bmin_[1] && max0 == n.bmax_[0] && max1 == n.bmax_[1]);
+//         const bool isH = _h > n.max_;
+//         const bool isM = isEqual<T>(n.max_, _h);
 
-        if (n.isFlat_) {
-            if(isPartial){
-                if (isH) lo += (max0 - min0) * (max1 - min1);
-                else if (isM) mo += (max0 - min0) * (max1 - min1);
-                else ho += (max0 - min0) * (max1 - min1);
-                continue;
-            } else {
-                const uint32_t r = N_ / uint32_t(std::round(std::pow(2, n.level_ - 1)));
-                if (isH) lo += r*r;
-                else if (isM) mo += r*r;
-                else ho += r*r;
-                continue;
-            }
-        }
+//         if (n.isFlat_) {
+//             if(isPartial){
+//                 if (isH) lo += (max0 - min0) * (max1 - min1);
+//                 else if (isM) mo += (max0 - min0) * (max1 - min1);
+//                 else ho += (max0 - min0) * (max1 - min1);
+//                 continue;
+//             } else {
+//                 const uint32_t r = N_ / uint32_t(std::round(std::pow(2, n.level_ - 1)));
+//                 if (isH) lo += r*r;
+//                 else if (isM) mo += r*r;
+//                 else ho += r*r;
+//                 continue;
+//             }
+//         }
 
-        if(n_[idx].level_ + 1 == max_level_){
-            const size_t c1 = size_t(std::round(4. * double(idx) - 4. * std::pow(4., n.level_ - 1) * frac1 + frac2));
-            const size_t c2 = c1 + 1;
-            const size_t c3 = c2 + 1;
-            const size_t c4 = c3 + 1;
+//         if(n_[idx].level_ + 1 == max_level_){
+//             const size_t c1 = size_t(std::round(4. * double(idx) - 4. * std::pow(4., n.level_ - 1) * frac1 + frac2));
+//             const size_t c2 = c1 + 1;
+//             const size_t c3 = c2 + 1;
+//             const size_t c4 = c3 + 1;
 
-            assert(c1 < b_.size());
+//             assert(c1 < b_.size());
 
-            qb_.push(c1);
-            qb_.push(c2);
-            qb_.push(c3);
-            qb_.push(c4);
-        } else {
+//             qb_.push(c1);
+//             qb_.push(c2);
+//             qb_.push(c3);
+//             qb_.push(c4);
+//         } else {
 
-            const size_t c1 = 4 * idx + 1;
-            const size_t c2 = c1 + 1;
-            const size_t c3 = c2 + 1;
-            const size_t c4 = c3 + 1;
+//             const size_t c1 = 4 * idx + 1;
+//             const size_t c2 = c1 + 1;
+//             const size_t c3 = c2 + 1;
+//             const size_t c4 = c3 + 1;
 
-            assert(c1 < n_.size());
+//             assert(c1 < n_.size());
 
-            qn_.push(c1);
-            qn_.push(c2);
-            qn_.push(c3);
-            qn_.push(c4);
-        }
-    }
+//             qn_.push(c1);
+//             qn_.push(c2);
+//             qn_.push(c3);
+//             qn_.push(c4);
+//         }
+//     }
 
-    while(!qb_.isEmpty()){
-        const size_t idx = qb_.front();
-        assert(idx < b_.size());
-        qb_.pop();
-        const auto[l, m, h] = impl_overlap(_min, _max, _h, b_[idx]);
-        lo += l;
-        mo += m;
-        ho += h;
-    }
+//     while(!qb_.isEmpty()){
+//         const size_t idx = qb_.front();
+//         assert(idx < b_.size());
+//         qb_.pop();
+//         const auto[l, m, h] = impl_overlap(_min, _max, _h, b_[idx]);
+//         lo += l;
+//         mo += m;
+//         ho += h;
+//     }
 
-    return { lo, mo, ho };
+//     return { lo, mo, ho };
     
-}//MQT2::MedianQuadTree::impl_overlap_it
+//}//MQT2::MedianQuadTree::impl_overlap_it
 
 template<class T, class B_T, uint32_t SIZE, class ALLOCATOR>
 MQT2::Result MQT2::MedianQuadTree<T, B_T, SIZE, ALLOCATOR>::impl_overlap(
