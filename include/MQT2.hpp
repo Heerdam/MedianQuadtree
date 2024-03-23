@@ -272,6 +272,7 @@ namespace MQT2 {
     public:
         constexpr static B_T BUCKET_SIZE = SIZE;
         using TYPE = T;
+        using B_Type = B_T;
         using ALLOCATOR_T = ALLOCATOR;
         //----------------
         MedianQuadTree(
