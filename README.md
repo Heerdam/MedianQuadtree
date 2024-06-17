@@ -1,5 +1,6 @@
 # MedianQuadtree
-A MedianQuadTree or MQT for short is a data structure that allows to compute the tri-level convolution for any height map in $O(\sqrt(n))$ and thread-safe manner. The MQT serves as back-end for the TurboPacker library and was part of my master thesis.
+A MedianQuadTree or MQT for short is a data structure that allows to compute the tri-level convolution for any height map in $O(\sqrt(n))$ and thread-safe manner. The MQT serves as back-end for the TurboPacker library and was part of my master thesis.<br />
+For a exhaustive discussion of the MQT I refere to here.
 
 ## Tri-Level Convolution
 For a height map $H(x, y)$, kernel $\kappa \in \mathbf{R}^2$ and height $\eta \in \mathbf{R}$ the tri-level convolution is $\wp:(l, m, h)$<br />
@@ -32,8 +33,3 @@ int main() {
     tree.recompute(mm);
 }
 ```
-
-## Important considerations
-The domain size needs to be of the size of bucket_size * 2^n. For smaller or non-quadratic domains simply just use a subset of the domain. 
-The bucket size should be chosen in a way that the tree has a depth of 8 to 13.
-Performance will rely heavily on the depth and bucket size.
