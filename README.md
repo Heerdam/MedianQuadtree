@@ -3,11 +3,11 @@ A MedianQuadTree or MQT for short is a data structure that allows to compute the
 For a exhaustive discussion of the MQT I refere to here.
 
 ## Tri-Level Convolution
-For a height map $H(x, y)$, kernel $\kappa \in \mathbf{R}^2$ and height $\eta \in \mathbf{R}$ the tri-level convolution is $\wp:(l, m, h)$<br />
+Let $H(x, y)$ represent the values from the heightmap H, D the domain, $(\hat{x}, \hat{y})$ the coordinates withing the support region $\text{supp}(K)\_{(x,y)}$, $K \in \mathbb{R}^2$ the kernel and $h \in \mathbb{R}$ the given height. Then the tri-level convolution $\{l, m, h\}$ is defined as<br />
 w.r.t.
-$$l \ = \ \int^{\kappa} \mathcal{H}\ \ \  \forall \ h \ < \ \eta$$
-$$m \ = \ \int^{\kappa} \mathcal{H}\ \ \  \forall \ h \ \equiv \ \eta$$ 
-$$h \ = \ \int^{\kappa} \mathcal{H}\ \ \  \forall \ h \ > \ \eta$$
+$$l = \{ H(\hat{x}, \hat{y}) \mid (\hat{x}, \hat{y}) \in \text{supp}(K)\_{(x,y)}, \forall (x, y) \in D, \text{ and } H(\hat{x}, \hat{y}) < h \}$$
+$$m = \{ H(\hat{x}, \hat{y}) \mid (\hat{x}, \hat{y}) \in \text{supp}(K)\_{(x,y)}, \forall (x, y) \in D, \text{ and } H(\hat{x}, \hat{y}) \equiv h \}$$
+$$h = \{ H(\hat{x}, \hat{y}) \mid \hat{x}, \hat{y}) \in \text{supp}(K)\_{(x,y)}, \forall (x, y) \in D, \text{ and } H(\hat{x}, \hat{y}) > h \} $$
 
 
 ## Quick start
