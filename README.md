@@ -1,6 +1,6 @@
 # MedianQuadtree
 A MedianQuadTree or MQT for short is a data structure that allows to compute the tri-level convolution for any height map in $O(\sqrt(n))$ and thread-safe manner. The MQT serves as back-end for the TurboPacker library and was part of my master thesis.<br />
-For a exhaustive discussion of the MQT I refere to [here](https://github.com/Heerdam/Master-Thesis/blob/master/Heerdam_master_thesis_final.pdf).
+For a exhaustive discussion of the MQT I refere to [here](https://github.com/Heerdam/Master-Thesis/blob/80decb188484df99bec2bb260a8a0fc62432bbd0/Heerdam_master_thesis_v1.1.pdf).
 
 ## Tri-Level Convolution
 Let $H(x, y)$ represent the values from the heightmap H, D the domain, $(\hat{x}, \hat{y})$ the coordinates withing the support region $\text{supp}(K)\_{(x,y)}$, $K \in \mathbb{R}^2$ the kernel and $h \in \mathbb{R}$ the given height. Then the tri-level convolution $\{l, m, h\}$ is defined as<br />
