@@ -75,12 +75,12 @@ namespace MQT2 {
             uint32_t h = 0, m = 0, l = 0;
             const uint32_t min0 = std::max<uint32_t>(0, _min[0]);
             const uint32_t max0 = std::min<uint32_t>(_N, _max[0]);
-            const uint32_t min1 = std::max<uint32_t>(0, _min[1]);
-            const uint32_t max1 = std::min<uint32_t>(_N, _max[1]);
+            const uint32_t min1 = std::max<uint32_t>(1, _min[1] + 1);
+            const uint32_t max1 = std::min<uint32_t>(_N - 1, _max[1] - 1);
             //----------------------
             for (uint32_t n0 = min0; n0 < max0; ++n0) {
-                const uint32_t i1 = min1 + n0 * _N;
-                const uint32_t i2 = (max1 - 1) + n0 * _N;
+                const uint32_t i1 = (min1 - 1) + n0 * _N;
+                const uint32_t i2 = (max1 + 1) + n0 * _N;
                 const auto hh1 = _map[i1];
                 const auto hh2 = _map[i2];
                 if(Detail::isEqual(hh1, _h)) m++;
