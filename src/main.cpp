@@ -1119,11 +1119,11 @@ void depth_test() {
 int main() {
     //test_bucket_node();
     //bench_tree();
-    bench_tree2();
+    //bench_tree2();
     //bench_border_tree2();
     //morton_test();
-    //MQT2_tester_float();
-    //MQT2_tester_int();
+    MQT2_tester_float();
+    MQT2_tester_int();
 
     //idx_test();
 
