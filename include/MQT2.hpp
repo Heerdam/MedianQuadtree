@@ -134,7 +134,7 @@ namespace MQT2 {
             uint32_t t = _base;
             while (t < _target)
                 t  = t << 1;
-            return t;
+            return std::max(2 * _base, t);
         }//get_power_2
 
         /*
