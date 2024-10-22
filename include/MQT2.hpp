@@ -68,6 +68,7 @@ namespace MQT2 {
 
         //----------------------------------
 
+        // overlap of [min[0], max[0]) x [min[1], max[1])
         template<class T, class B_T, class ALLOCATOR = std::allocator<T>>
         [[nodiscard]] inline Result naive_tester(
         const std::vector<T, ALLOCATOR>& _map,
@@ -89,6 +90,7 @@ namespace MQT2 {
             return { l, m, h };
 	    };//naive_tester
 
+        // border of [min[0], max[0]) x [min[1], max[1])
         template<class T, class B_T, class ALLOCATOR = std::allocator<T>>
         [[nodiscard]] inline Result naive_border_tester(
         const std::vector<T, ALLOCATOR>& _map,
@@ -98,14 +100,16 @@ namespace MQT2 {
         const T _h
         ) noexcept {
             uint32_t h = 0, m = 0, l = 0;
+            //lowest index
             const uint32_t min0 = std::max<uint32_t>(0, _min[0]);
-            const uint32_t max0 = std::min<uint32_t>(_N, _max[0]);
-            const uint32_t min1 = std::max<uint32_t>(1, _min[1] + 1);
-            const uint32_t max1 = std::min<uint32_t>(_N - 1, _max[1] - 1);
+            const uint32_t min1 = std::max<uint32_t>(0, _min[1]);
+            //highest index
+            const uint32_t max0 = std::min<uint32_t>(_N, _max[0]) - 1;
+            const uint32_t max1 = std::min<uint32_t>(_N, _max[1]) - 1;
             //----------------------
-            for (uint32_t n0 = min0; n0 < max0; ++n0) {
-                const uint32_t i1 = (min1 - 1) + n0 * _N;
-                const uint32_t i2 = (max1 + 1) + n0 * _N;
+            for (uint32_t n0 = min0; n0 < max0 + 1; ++n0) {
+                const uint32_t i1 = min1 + n0 * _N;
+                const uint32_t i2 = max1 + n0 * _N;
                 const auto hh1 = _map[i1];
                 const auto hh2 = _map[i2];
                 if(Detail::isEqual(hh1, _h)) m++;
@@ -115,9 +119,10 @@ namespace MQT2 {
                 else if(hh2 > _h) h++;
                 else l++; 
             }
-            for (uint32_t n1 = min1; n1 < max1; ++n1) {
+            //offset by 1 to not count corners twice
+            for (uint32_t n1 = min1 + 1; n1 < max1; ++n1) {
                 const uint32_t i1 = n1 + min0 * _N;
-                const uint32_t i2 = n1 + (max1 - 1) * _N;
+                const uint32_t i2 = n1 + max0 * _N;
                 const auto hh1 = _map[i1];
                 const auto hh2 = _map[i2];
                 if(Detail::isEqual(hh1, _h)) m++;
@@ -288,13 +293,15 @@ namespace MQT2 {
         //----------------
         void recompute(const std::vector<bool>& _m) noexcept;
         //----------------
-        //[min, max)
+
+        // overlap of [min[0], max[0]) x [min[1], max[1])
         [[nodiscard]] Result 
         check_overlap(const Vec2<B_T>& _min, const Vec2<B_T>& _max, const T _h) const noexcept;
 
-        //[min, max)
+        // border of [min[0], max[0]) x [min[1], max[1])
         [[nodiscard]] Result
         check_border_overlap(const Vec2<B_T>& _min, const Vec2<B_T>& _max, const T _h) const noexcept;
+        
         //----------------
         void print_debug() const;
     };//MedianQuadTree
