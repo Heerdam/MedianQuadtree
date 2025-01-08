@@ -19,8 +19,8 @@ endif()
 
 add_library( MQT2 INTERFACE )
 
-target_include_directories(MQT2 INTERFACE include/MQT2 )
+target_include_directories(MQT2 INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include/ )
 target_link_libraries(MQT2 INTERFACE)
 
-add_subdirectory(benchmarks)
+#add_subdirectory(benchmarks)
 add_subdirectory(tests)

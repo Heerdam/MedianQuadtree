@@ -14,4 +14,4 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Catch2)
 
 add_executable(mqt2_tests ${CMAKE_CURRENT_SOURCE_DIR}/tests.cpp)
-target_link_libraries(mqt2_tests PRIVATE Catch2::Catch2WithMain)
+target_link_libraries(mqt2_tests MQT2 Catch2::Catch2WithMain)
