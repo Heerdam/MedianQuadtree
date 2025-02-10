@@ -265,9 +265,9 @@ namespace MQT2 {
     std::vector<Detail::Node<T>> n_;
 
    public:
-    constexpr static uint32_t BUCKET_BucketSize = BucketSize;
-    using TYPE                                  = T;
-    using ALLOCATOR_T                           = Allocator;
+    constexpr static uint32_t BUCKET_SIZE = BucketSize;
+    using TYPE                            = T;
+    using ALLOCATOR_T                     = Allocator;
     //----------------
     // _n: needs to the width/height of the map. the value needs to be a multiply of BucketSize and a square. this new
     // size can be easily computed using the Detail::get_power_of_2(your_size, bucket_size) function
